@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import m3gp.client.ClientWekaSim;
-import m3gp.tree.TreeM3GP;
-import m3gp.tree.TreeM3GPCrossoverHandler;
-import m3gp.tree.TreeM3GPMutationHandler;
-import m3gp.tree.TreeM3GPPruningHandler;
+import m3gp.tree.Tree;
+import m3gp.tree.TreeCrossoverHandler;
+import m3gp.tree.TreeMutationHandler;
+import m3gp.tree.TreePruningHandler;
 import m3gp.util.Arrays;
 import m3gp.util.Mat;
 
@@ -16,7 +16,7 @@ import m3gp.util.Mat;
  * @author Jo�o Batista, jbatista@di.fc.ul.pt
  *
  */
-public class ForestM3GP{
+public class Forest{
 	private boolean messages = true;
 
 	// current and max generation
@@ -24,7 +24,7 @@ public class ForestM3GP{
 	private int maxGeneration = 10;
 
 	// population
-	private TreeM3GP [] population;
+	private Tree [] population;
 	private double fullTreeFraction;
 
 	//data, target column and fraction used for training
@@ -47,7 +47,7 @@ public class ForestM3GP{
 	private int maxDepth = 6;
 
 	//from the trees with the best train rmse over the generations, this is the one with the lower test rmse
-	private TreeM3GP bestTree = null;
+	private Tree bestTree = null;
 
 	/**
 	 * Construtor
@@ -62,7 +62,7 @@ public class ForestM3GP{
 	 * @param trainFract
 	 * @throws IOException
 	 */
-	public ForestM3GP(String filename, String [] op, String [] term, int maxDepth, 
+	public Forest(String filename, String [] op, String [] term, int maxDepth, 
 			double [][] data, String [] target, int populationSize, double trainFract,
 			String populationType, int maxGeneration) throws IOException{
 		message("Creating forest...");
@@ -77,26 +77,26 @@ public class ForestM3GP{
 
 		this.maxGeneration = maxGeneration;
 
-		population = new TreeM3GP[populationSize];
+		population = new Tree[populationSize];
 
 		switch(populationType) {
 		case "Ramped":
 			for(int i = 0; i < populationSize; i++){
 				if( i < (int)(populationSize * fullTreeFraction))
-					population[i] = new TreeM3GP(op, term, 0 , Math.max(i%maxDepth,2));
+					population[i] = new Tree(op, term, 0 , Math.max(i%maxDepth,2));
 				else
-					population[i] = new TreeM3GP(op, term, terminalRateForGrow , Math.max(i%maxDepth,2));
+					population[i] = new Tree(op, term, terminalRateForGrow , Math.max(i%maxDepth,2));
 			}
 			break;
 		default: // full
 			for(int i = 0; i < populationSize; i++){
 				if( i < populationSize / 2)
-					population[i] = new TreeM3GP(op, term, 0 , maxDepth);
+					population[i] = new Tree(op, term, 0 , maxDepth);
 			}
 			break;
 		}
 		
-		TreeM3GP.trainSize = (int)(target.length * trainFraction);
+		Tree.trainSize = (int)(target.length * trainFraction);
 		
 	}
 
@@ -146,7 +146,7 @@ public class ForestM3GP{
 	public double[] nextGeneration(int generation) throws IOException{
 		double [] results = new double[2];
 
-		TreeM3GP [] nextGen = new TreeM3GP [population.length];
+		Tree [] nextGen = new Tree [population.length];
 		double [] fitnesses = new double[population.length];
 
 		// Obtencao de fitness
@@ -158,26 +158,35 @@ public class ForestM3GP{
 
 		Arrays.mergeSortBy(population, fitnesses);
 		/*for(int i = 0; i < fitnesses.length; i++) {
-			System.out.println(fitnesses[i] + "         " + population[i].getTrainAccuracy(data, target,trainFraction) + "    " + population[population.length-1].reference());//TODO REEEEEE
+			System.out.println(fitnesses[i] + "         " + population[i].getTrainAccuracy(data, target,trainFraction) + "    " + population[i].id);//TODO REEEEEE
 		}*/
 		//System.out.println(fitnesses[0]);
 		
 		//Prunning
-		nextGen[0] = TreeM3GPPruningHandler.prun(population[population.length-1],data,target,trainFraction);
+		double d1, d2;
+		d1 = population[population.length-1].getTrainAccuracy(data, target,trainFraction);
+		System.out.println("    "+d1 +" "+ population[population.length-1].size());
 		
-		// Elitismo
+		nextGen[0] = TreePruningHandler.prun(population[population.length-1],data,target,trainFraction);
+		
+		d2 = nextGen[0].getTrainAccuracy(data, target,trainFraction);
+		System.out.println("    "+d2 + " " + nextGen[0].size());
+		if(d2<d1)System.out.println("RRREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+		if(d2>d1)System.out.println("WWWWWWWWWWOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+		
+		// Elitismo 
 		for(int i = 1; i < getElitismSize(); i++ ){
 			nextGen[i] = population[population.length-1-i];
 		}
 		
 		
 		//Selecao e reproducao
-		TreeM3GP parent1, parent2;
+		Tree parent1, parent2;
 		for(int i = getElitismSize(); i < nextGen.length; i++){
 			parent1 = tournament(population);
 			parent2 = tournament(population);
 
-			if(Math.random() < 0.75) {//TODO default = 0.75
+			if(Math.random() < 0.25) {//TODO default = 0.75
 				nextGen[i] = crossover(parent1, parent2);
 			}else {
 				nextGen[i] = mutation(parent1);
@@ -192,14 +201,14 @@ public class ForestM3GP{
 		//bestTree = nextGen[0];
 		
 		//Sets the bestTree to the generation best if it has a better test error 
-		if(bestTree == null || population[population.length-1].getTestAccuracy(data, target, trainFraction)>bestTree.getTestAccuracy(data, target, trainFraction)) {
-			bestTree = population[population.length-1];
+		if(bestTree == null || nextGen[0].getTestAccuracy(data, target, trainFraction)>bestTree.getTestAccuracy(data, target, trainFraction)) {
+			bestTree = nextGen[0];//population[population.length-1];
 		}
 		
 		results[0] = bestTree.getTrainAccuracy(data, target, trainFraction);
 		results[1] = bestTree.getTestAccuracy(data, target, trainFraction);
 		
-		System.out.println(generation + ": " + results[0] + " // " + results[1] + " // " + population[population.length-1].reference());
+		System.out.println(generation + ": " + results[0] + " // " + results[1] + " // " + bestTree.id);
 		
 		population = nextGen;
 		
@@ -210,7 +219,7 @@ public class ForestM3GP{
 	 * Sets the tree with the higher fitness to the index 0 of the population
 	 * @param pop population
 	 */
-	private void setBestToLast(TreeM3GP[] pop) {
+	private void setBestToLast(Tree[] pop) {
 		int bestIndex = 0;
 		double bestRMSE = pop[0].getTrainAccuracy(data, target,trainFraction);
 		double candidateRMSE;
@@ -221,7 +230,7 @@ public class ForestM3GP{
 				bestIndex = i;
 			}
 		}
-		TreeM3GP dup = pop[pop.length-1];
+		Tree dup = pop[pop.length-1];
 		pop[pop.length-1] = pop[bestIndex];
 		pop[bestIndex] = dup;
 	}
@@ -277,13 +286,8 @@ public class ForestM3GP{
 	 * @param population Tree population
 	 * @return The winner tree
 	 */
-	private TreeM3GP tournament(TreeM3GP [] population) {
-		int tournamentSize = getTournamentSize();
-		int pick = Mat.random(population.length);
-		for(int i = 1; i < tournamentSize; i ++){
-			pick = Math.max(pick, Mat.random(population.length));
-		}
-		return population[pick];
+	private Tree tournament(Tree [] population) {
+		return ForestFunctions.tournament(population, getTournamentSize());
 	}
 	
 	/**
@@ -294,15 +298,8 @@ public class ForestM3GP{
 	 * @param p2 Parent 2
 	 * @return Descendent of p1 and p2 through crossover
 	 */
-	private TreeM3GP crossover(TreeM3GP p1, TreeM3GP p2) {
-		TreeM3GP candidate, smaller = TreeM3GPCrossoverHandler.crossover(p1, p2,data, target, trainFraction);
-		for(int i = 1; i < 0;i++) {//getTournamentSize(); i++) {
-			candidate = TreeM3GPCrossoverHandler.crossover(p1, p2,data, target, trainFraction);
-			if(candidate.size() < smaller.size()) {
-				smaller = candidate;
-			}
-		}
-		return smaller;
+	private Tree crossover(Tree p1, Tree p2) {
+			return ForestFunctions.crossover(p1, p2,data, target, trainFraction);
 	}
 	
 	/**
@@ -312,14 +309,7 @@ public class ForestM3GP{
 	 * @param p Original Tree
 	 * @return Descendent of p by mutation
 	 */
-	private TreeM3GP mutation(TreeM3GP p) {
-		TreeM3GP candidate, smaller = TreeM3GPMutationHandler.mutation(p, operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
-		for(int i = 1; i < getTournamentSize(); i++) {
-			candidate = TreeM3GPMutationHandler.mutation(p, operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
-			if(candidate.size() < smaller.size()) {
-				smaller = candidate;
-			}
-		}
-		return smaller;
+	private Tree mutation(Tree p) {
+		return ForestFunctions.mutation(p, getTournamentSize(), operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
 	}
 }

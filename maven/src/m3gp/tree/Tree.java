@@ -11,9 +11,12 @@ import m3gp.util.Matrix;
  * @author João Batista, jbatista@di.fc.ul.pt
  *
  */
-public class TreeM3GP{
+public class Tree{
 	public static int trainSize;
 
+	private static int idGen=0;
+	public int id = idGen++;
+	
 	private ArrayList<Node> dimensions;
 	
 	private ArrayList<double[][]> covarianceMatrix = null;
@@ -28,19 +31,19 @@ public class TreeM3GP{
 	 * @param t_rate
 	 * @param depth
 	 */
-	public TreeM3GP(String [] op, String [] term, double t_rate, int depth){
+	public Tree(String [] op, String [] term, double t_rate, int depth){
 		dimensions = new ArrayList<Node>();
-		dimensions.add(new Node(op, term, t_rate,0, depth));
+		dimensions.add(new Node(op, term, t_rate,depth));
 	}
 
-	public TreeM3GP(ArrayList<Node> dim) {
+	public Tree(ArrayList<Node> dim) {
 		dimensions = dim;
 	}
 
 	/**
 	 * Empty tree
 	 */
-	public TreeM3GP() {}
+	public Tree() {}
 
 	/**
 	 * Returns the TreeSTGP under it's String format
@@ -182,12 +185,6 @@ public class TreeM3GP{
 	
 	public ArrayList<Node> getDimensions() {
 		return dimensions;
-	}
-	
-	public TreeM3GP clone() {
-		TreeM3GP ret = new TreeM3GP();
-		ret.dimensions = (ArrayList<Node>) dimensions.clone();
-		return ret;
 	}
 
 	public String reference() {

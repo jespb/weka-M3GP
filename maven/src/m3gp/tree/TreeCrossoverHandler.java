@@ -11,7 +11,7 @@ import m3gp.util.Mat;
  * @author João Batista, jbatista@di.fc.ul.pt
  *
  */
-public class TreeM3GPCrossoverHandler {	
+public class TreeCrossoverHandler {	
 	/**
 	 * Executes the crossover of a TreeSTGP by swaping a random node with 
 	 * another random node from other TreeSTGP
@@ -22,7 +22,7 @@ public class TreeM3GPCrossoverHandler {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static TreeM3GP crossover(TreeM3GP parent1, TreeM3GP parent2, double [][] data, String [] target, double trainFract){
+	public static Tree crossover(Tree parent1, Tree parent2, double [][] data, String [] target, double trainFract){
 		// 50% crossover normal, 50% de trocar duas dimensoes
 		ArrayList<Node> dim1 = clone(parent1.getDimensions());
 		ArrayList<Node> dim2 = clone(parent1.getDimensions());
@@ -39,7 +39,7 @@ public class TreeM3GPCrossoverHandler {
 			dim1.set(Mat.random(dim1.size()), dim2.get(Mat.random(dim2.size())));
 			break;
 		}
-		return new TreeM3GP(dim1);
+		return new Tree(dim1);
 	}
 	
 	private static ArrayList<Node> clone(ArrayList<Node> dim){

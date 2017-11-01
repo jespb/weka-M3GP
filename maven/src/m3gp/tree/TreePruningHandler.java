@@ -4,19 +4,19 @@ import java.util.ArrayList;
 
 import m3gp.node.Node;
 
-public class TreeM3GPPruningHandler {
+public class TreePruningHandler {
 /*
  * Para cada dimensao:
  * remove a dimensao e ve se o fitness piora, nesse caso volta a adiciona-la
  */
-	public static TreeM3GP prun(TreeM3GP tree, double [][] data, String [] target, double trainFract){
-		TreeM3GP t = tree.clone(), candidate = null;
+	public static Tree prun(Tree tree, double [][] data, String [] target, double trainFract){
+		Tree t = new Tree(clone(tree.getDimensions())), candidate = null;
 		for(int i = 0; t.getDimensions().size() >1 && i < t.getDimensions().size(); i++) {
 			ArrayList<Node> newDim = clone(t.getDimensions());
 			newDim.remove(i);
-			candidate = new TreeM3GP( newDim);
+			candidate = new Tree(newDim);
 			if(candidate.getTrainAccuracy(data, target,trainFract) > t.getTrainAccuracy(data, target,trainFract)) {
-				t = candidate;
+				t = new Tree(clone(candidate.getDimensions()));
 				i--;
 			}
 		}

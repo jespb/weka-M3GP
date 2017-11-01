@@ -14,12 +14,10 @@ public class Node implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	String v = null;
-	Node l = null;
-	Node r = null;
+	String v;
+	Node l;
+	Node r;
 	
-	public static int index;
-
 	/**
 	 * Basic constructor
 	 * @param value
@@ -47,13 +45,13 @@ public class Node implements Serializable{
 	 * @param t_rate
 	 * @param depth
 	 */
-	public Node(String [] op, String [] term, double t_rate, int depth, int maxDepth){
-		if(depth>0 && Math.random() < t_rate || depth >= maxDepth){
+	public Node(String [] op, String [] term, double t_rate, int depth){
+		if(Math.random() < t_rate || depth <= depth){
 			v = term[Mat.random(term.length)];
 		}else{
 			v = op[Mat.random(op.length)];
-			l = new Node(op, term, t_rate, depth+1, maxDepth);
-			r = new Node(op, term, t_rate, depth+1, maxDepth );
+			l = new Node(op, term, t_rate, depth-1);
+			r = new Node(op, term, t_rate, depth-1);
 		}
 	}
 
@@ -64,15 +62,8 @@ public class Node implements Serializable{
 	 */
 	public double calculate(double [] vals){
 		if(isLeaf()){
-			if(v.startsWith("x")){
-				int index = Integer.parseInt(v.substring(1));
-				return vals[index];
-			}else{
-				if(v.equals("e"))
-					return Math.E;
-				else
-					return Double.parseDouble(v);
-			}
+			int index = Integer.parseInt(v.substring(1));
+			return vals[index];
 		}else{
 			double d = 0;
 			switch(v){
@@ -113,24 +104,6 @@ public class Node implements Serializable{
 	 */
 	private boolean isLeaf(){
 		return l==null;// &&r==null;
-	}
-
-	/**
-	 * Constructor
-	 * @param s
-	 */
-	public Node(String [] s) {
-		if(s[index].equals("(")){
-			index ++;
-			l = new Node(s);
-			v = s[index];
-			index++;
-			r = new Node(s);
-			index++;
-		}else{
-			v = s[index];
-			index++;
-		}
 	}
 
 	/**
