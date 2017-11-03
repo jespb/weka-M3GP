@@ -1,4 +1,4 @@
-package m3gp.forest;
+package m3gp.population;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import m3gp.util.Mat;
  * @author Jo�o Batista, jbatista@di.fc.ul.pt
  *
  */
-public class Forest{
+public class Population{
 	private boolean messages = true;
 
 	// current and max generation
@@ -62,7 +62,7 @@ public class Forest{
 	 * @param trainFract
 	 * @throws IOException
 	 */
-	public Forest(String filename, String [] op, String [] term, int maxDepth, 
+	public Population(String filename, String [] op, String [] term, int maxDepth, 
 			double [][] data, String [] target, int populationSize, double trainFract,
 			String populationType, int maxGeneration) throws IOException{
 		message("Creating forest...");
@@ -164,15 +164,15 @@ public class Forest{
 		
 		//Prunning
 		double d1, d2;
-		d1 = population[population.length-1].getTrainAccuracy(data, target,trainFraction);
-		System.out.println("    "+d1 +" "+ population[population.length-1].size());
+		//d1 = population[population.length-1].getTrainAccuracy(data, target,trainFraction);
+		//System.out.println("    "+d1 +" "+ population[population.length-1].size());
 		
 		nextGen[0] = TreePruningHandler.prun(population[population.length-1],data,target,trainFraction);
 		
-		d2 = nextGen[0].getTrainAccuracy(data, target,trainFraction);
-		System.out.println("    "+d2 + " " + nextGen[0].size());
-		if(d2<d1)System.out.println("RRREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-		if(d2>d1)System.out.println("WWWWWWWWWWOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+		//d2 = nextGen[0].getTrainAccuracy(data, target,trainFraction);
+		//System.out.println("    "+d2 + " " + nextGen[0].size());
+		//if(d2<d1)System.out.println("RRREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+		//if(d2>d1)System.out.println("WWWWWWWWWWOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 		
 		// Elitismo 
 		for(int i = 1; i < getElitismSize(); i++ ){
@@ -181,15 +181,17 @@ public class Forest{
 		
 		
 		//Selecao e reproducao
-		Tree parent1, parent2;
+		Tree[] cross;
 		for(int i = getElitismSize(); i < nextGen.length; i++){
-			parent1 = tournament(population);
-			parent2 = tournament(population);
 
-			if(Math.random() < 0.25) {//TODO default = 0.75
-				nextGen[i] = crossover(parent1, parent2);
+			if(Math.random() < 0.75) {//TODO default = 0.75
+				cross = crossover(population);
+				for(int j = i; j < i+2 && j<nextGen.length; j++) {
+					nextGen[j] = cross[j-i];
+				}
+				i++;
 			}else {
-				nextGen[i] = mutation(parent1);
+				nextGen[i] = mutation(population);
 			}
 		}
 		
@@ -280,17 +282,6 @@ public class Forest{
 	}
 	
 	/**
-	 * Picks as many trees from population as the size of the tournament
-	 * and return the one with the lower fitness, assuming the population
-	 * is already sorted
-	 * @param population Tree population
-	 * @return The winner tree
-	 */
-	private Tree tournament(Tree [] population) {
-		return ForestFunctions.tournament(population, getTournamentSize());
-	}
-	
-	/**
 	 * This method creates as many trees as the size of the tournament
 	 * which are descendents of p1 and p2 through crossover and returns
 	 * the smallest one
@@ -298,8 +289,8 @@ public class Forest{
 	 * @param p2 Parent 2
 	 * @return Descendent of p1 and p2 through crossover
 	 */
-	private Tree crossover(Tree p1, Tree p2) {
-			return ForestFunctions.crossover(p1, p2,data, target, trainFraction);
+	private Tree[] crossover(Tree[] population) {
+			return PopulationFunctions.crossover(population, getTournamentSize(),data, target, trainFraction);
 	}
 	
 	/**
@@ -309,7 +300,7 @@ public class Forest{
 	 * @param p Original Tree
 	 * @return Descendent of p by mutation
 	 */
-	private Tree mutation(Tree p) {
-		return ForestFunctions.mutation(p, getTournamentSize(), operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
+	private Tree mutation(Tree[] population) {
+		return PopulationFunctions.mutation(population, getTournamentSize(), operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
 	}
 }

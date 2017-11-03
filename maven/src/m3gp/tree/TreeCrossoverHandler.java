@@ -21,8 +21,7 @@ public class TreeCrossoverHandler {
 	 * @param parent2
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public static Tree crossover(Tree parent1, Tree parent2, double [][] data, String [] target, double trainFract){
+	public static Tree[] crossover(Tree parent1, Tree parent2, double [][] data, String [] target, double trainFract){
 		// 50% crossover normal, 50% de trocar duas dimensoes
 		ArrayList<Node> dim1 = clone(parent1.getDimensions());
 		ArrayList<Node> dim2 = clone(parent1.getDimensions());
@@ -33,13 +32,17 @@ public class TreeCrossoverHandler {
 			Node p2 = dim2.get(Mat.random(dim2.size())).clone();
 			Node r1 = NodeHandler.randomNode(p1);
 			Node r2 = NodeHandler.randomNode(p2);
-			NodeHandler.redirect(r1,r2);
+			NodeHandler.swap(r1,r2);
 			break;
 		case 1://troca dimensoes
-			dim1.set(Mat.random(dim1.size()), dim2.get(Mat.random(dim2.size())));
+			int index1 = Mat.random(dim1.size());
+			int index2 = Mat.random(dim2.size());
+			Node n = dim1.get(index1);
+			dim1.set(index1, dim2.get(index2));
+			dim2.set(index2, n);
 			break;
 		}
-		return new Tree(dim1);
+		return new Tree[] {new Tree(dim1), new Tree(dim2)};
 	}
 	
 	private static ArrayList<Node> clone(ArrayList<Node> dim){

@@ -4,7 +4,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import m3gp.forest.Forest;
+import m3gp.population.Population;
 import m3gp.util.Arrays;
 import m3gp.util.Data;
 import m3gp.util.Files;
@@ -16,7 +16,7 @@ import m3gp.util.Files;
  */
 public class ClientWekaSim {
 
-	static int file = 1; // ST, GS
+	static int file = 0; // ST, GS
 
 	static String xDataInputFilename = "Brazil_x.txt glass_x.csv cc_x.csv".split(" ")[file];
 	static String yDataInputFilename = "Brazil_y.txt glass_y.csv cc_y.csv".split(" ")[file];
@@ -27,12 +27,12 @@ public class ClientWekaSim {
 	static String [] terminals = null;
 
 	static double trainPercentage = 0.70;
-	static double tournamentPercentage = 0.05;
+	static double tournamentPercentage = 0.07;
 	static double elitismPercentage = 0.05;
 
 	static int numberOfGenerations = 50;
 	static int numberOfRuns = 1;
-	static int populationSize = 100;
+	static int populationSize = 80;
 	static int maxDepth = 6;
 
 	static boolean shuffle = true;
@@ -45,7 +45,7 @@ public class ClientWekaSim {
 
 	// Variables
 	public static double [][] results = new double [numberOfGenerations][3];
-	static Forest f = null;
+	static Population f = null;
 
 	/**
 	 * main
@@ -200,7 +200,7 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	private static void setForest() throws IOException{
-		f = new Forest("", operations, 
+		f = new Population("", operations, 
 				terminals, maxDepth, data, target, 
 				populationSize,trainPercentage, treeType,numberOfGenerations);
 	}

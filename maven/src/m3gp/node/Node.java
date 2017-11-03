@@ -46,7 +46,7 @@ public class Node implements Serializable{
 	 * @param depth
 	 */
 	public Node(String [] op, String [] term, double t_rate, int depth){
-		if(Math.random() < t_rate || depth <= depth){
+		if(Math.random() < t_rate || depth <= 0){
 			v = term[Mat.random(term.length)];
 		}else{
 			v = op[Mat.random(op.length)];

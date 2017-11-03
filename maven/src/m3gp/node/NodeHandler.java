@@ -43,4 +43,11 @@ public class NodeHandler {
 		r1.r = r2.r;
 		r1.v = r2.v;
 	}
+
+	public static void swap(Node r1, Node r2) {
+		Node tmp = new Node("dup");
+		redirect(tmp, r1);
+		redirect(r1,r2);
+		redirect(r2,tmp);
+	}
 }
