@@ -1,9 +1,9 @@
-package m3gp.population;
+package weka.classifiers.trees.m3gp.population;
 
-import m3gp.tree.Tree;
-import m3gp.tree.TreeCrossoverHandler;
-import m3gp.tree.TreeMutationHandler;
-import m3gp.util.Mat;
+import weka.classifiers.trees.m3gp.tree.Tree;
+import weka.classifiers.trees.m3gp.tree.TreeCrossoverHandler;
+import weka.classifiers.trees.m3gp.tree.TreeMutationHandler;
+import weka.classifiers.trees.m3gp.util.Mat;
 
 class PopulationFunctions {
 	/**

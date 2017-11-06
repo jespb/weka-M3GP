@@ -1,10 +1,10 @@
-package m3gp.tree;
+package weka.classifiers.trees.m3gp.tree;
 
 import java.util.ArrayList;
 
-import m3gp.node.Node;
-import m3gp.node.NodeHandler;
-import m3gp.util.Mat;
+import weka.classifiers.trees.m3gp.node.Node;
+import weka.classifiers.trees.m3gp.node.NodeHandler;
+import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
  * 
@@ -23,8 +23,8 @@ public class TreeCrossoverHandler {
 	 */
 	public static Tree[] crossover(Tree parent1, Tree parent2, double [][] data, String [] target, double trainFract){
 		// 50% crossover normal, 50% de trocar duas dimensoes
-		ArrayList<Node> dim1 = clone(parent1.getDimensions());
-		ArrayList<Node> dim2 = clone(parent1.getDimensions());
+		ArrayList<Node> dim1 = parent1.cloneDimensions();
+		ArrayList<Node> dim2 = parent2.cloneDimensions();
 
 		switch(Mat.random(2)) {
 		case 0://crossover normal
@@ -43,13 +43,5 @@ public class TreeCrossoverHandler {
 			break;
 		}
 		return new Tree[] {new Tree(dim1), new Tree(dim2)};
-	}
-	
-	private static ArrayList<Node> clone(ArrayList<Node> dim){
-		ArrayList<Node> ret = new ArrayList<Node>();
-		for(int i = 0; i < dim.size(); i++) {
-			ret.add(dim.get(i).clone());
-		}
-		return ret;
 	}
 }

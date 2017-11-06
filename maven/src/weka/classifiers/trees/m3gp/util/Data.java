@@ -1,4 +1,4 @@
-package m3gp.util;
+package weka.classifiers.trees.m3gp.util;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

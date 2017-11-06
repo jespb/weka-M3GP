@@ -1,6 +1,6 @@
-package m3gp.node;
+package weka.classifiers.trees.m3gp.node;
 
-import m3gp.util.Mat;
+import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
  * 
@@ -14,23 +14,7 @@ public class NodeHandler {
 	 * @return
 	 */
 	public static Node randomNode(Node n){
-		return index(n, Mat.random(n.size()));
-	}
-
-	/**
-	 * Returns a node inside n using index i
-	 * @param n
-	 * @param i
-	 * @return
-	 */
-	private static Node index(Node n, int i){
-		if(i==0) return n;
-		int lsize = n.l.size();
-		if(lsize < i){
-			return index (n.r, i - lsize - 1);
-		}else{
-			return index (n.l, i - 1);
-		}	
+		return index(n, Mat.random(n.getSize()));
 	}
 
 	/**
@@ -49,5 +33,21 @@ public class NodeHandler {
 		redirect(tmp, r1);
 		redirect(r1,r2);
 		redirect(r2,tmp);
+	}
+	
+	/**
+	 * Returns a node inside n using index i
+	 * @param n
+	 * @param i
+	 * @return
+	 */
+	private static Node index(Node n, int i){
+		if(i==0) return n;
+		int lsize = n.l.getSize();
+		if(lsize < i){
+			return index (n.r, i - lsize - 1);
+		}else{
+			return index (n.l, i - 1);
+		}	
 	}
 }

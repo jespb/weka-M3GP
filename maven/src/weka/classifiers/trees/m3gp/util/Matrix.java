@@ -1,4 +1,4 @@
-package m3gp.util;
+package weka.classifiers.trees.m3gp.util;
 
 import java.util.ArrayList;
 
@@ -115,7 +115,7 @@ public class Matrix {
 
 	// Method to carry out the partial-pivoting Gaussian
 	// elimination.  Here index[] stores pivoting order.
-	public static void gaussian(double a[][], int index[]){
+	private static void gaussian(double a[][], int index[]){
 		int n = index.length;
 		double c[] = new double[n];
 

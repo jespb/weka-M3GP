@@ -1,15 +1,15 @@
-package m3gp.population;
+package weka.classifiers.trees.m3gp.population;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-import m3gp.client.ClientWekaSim;
-import m3gp.tree.Tree;
-import m3gp.tree.TreeCrossoverHandler;
-import m3gp.tree.TreeMutationHandler;
-import m3gp.tree.TreePruningHandler;
-import m3gp.util.Arrays;
-import m3gp.util.Mat;
+import weka.classifiers.trees.m3gp.client.ClientWekaSim;
+import weka.classifiers.trees.m3gp.tree.Tree;
+import weka.classifiers.trees.m3gp.tree.TreeCrossoverHandler;
+import weka.classifiers.trees.m3gp.tree.TreeMutationHandler;
+import weka.classifiers.trees.m3gp.tree.TreePruningHandler;
+import weka.classifiers.trees.m3gp.util.Arrays;
+import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
  * 
@@ -25,7 +25,6 @@ public class Population{
 
 	// population
 	private Tree [] population;
-	private double fullTreeFraction;
 
 	//data, target column and fraction used for training
 	private double [][] data;
@@ -33,8 +32,8 @@ public class Population{
 	private double trainFraction;
 
 	//fraction of the population used for tournament and elitism
-	private double tournamentFraction = 0.04;
-	private double elitismFraction = 0.01;
+	private int tournamentSize = 2;
+	private int elitismSize = 1;
 
 	//operations and terminals used
 	private String [] operations;
@@ -64,9 +63,13 @@ public class Population{
 	 */
 	public Population(String filename, String [] op, String [] term, int maxDepth, 
 			double [][] data, String [] target, int populationSize, double trainFract,
-			String populationType, int maxGeneration) throws IOException{
+			String populationType, int maxGeneration, double tournamentFraction,
+			double elitismFraction) throws IOException{
 		message("Creating forest...");
 
+		tournamentSize = (int) (tournamentFraction * populationSize);
+		elitismSize = (int) (elitismFraction * populationSize);
+		
 		this.data = data;
 		this.target = target;
 		this.trainFraction = trainFract;
@@ -82,7 +85,7 @@ public class Population{
 		switch(populationType) {
 		case "Ramped":
 			for(int i = 0; i < populationSize; i++){
-				if( i < (int)(populationSize * fullTreeFraction))
+				if( i < (int)(populationSize * 0.5))
 					population[i] = new Tree(op, term, 0 , Math.max(i%maxDepth,2));
 				else
 					population[i] = new Tree(op, term, terminalRateForGrow , Math.max(i%maxDepth,2));
@@ -98,20 +101,6 @@ public class Population{
 		
 		Tree.trainSize = (int)(target.length * trainFraction);
 		
-	}
-
-	/**
-	 * Sets the fraction of the population used in tournaments to d
-	 */
-	public void setTournamentFraction(double d){
-		tournamentFraction = d;
-	}
-	
-	/**
-	 * Sets the fraction of the population selected by elitism to d
-	 */
-	public void setElitismFraction(double d){
-		elitismFraction = d;
 	}
 
 	/**
@@ -175,14 +164,14 @@ public class Population{
 		//if(d2>d1)System.out.println("WWWWWWWWWWOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 		
 		// Elitismo 
-		for(int i = 1; i < getElitismSize(); i++ ){
+		for(int i = 1; i < elitismSize; i++ ){
 			nextGen[i] = population[population.length-1-i];
 		}
 		
 		
 		//Selecao e reproducao
 		Tree[] cross;
-		for(int i = getElitismSize(); i < nextGen.length; i++){
+		for(int i = elitismSize; i < nextGen.length; i++){
 
 			if(Math.random() < 0.75) {//TODO default = 0.75
 				cross = crossover(population);
@@ -195,7 +184,7 @@ public class Population{
 			}
 		}
 		
-		if(getElitismSize() == 0) {
+		if(elitismSize == 0) {
 			setBestToLast(population);
 		}
 			
@@ -210,7 +199,7 @@ public class Population{
 		results[0] = bestTree.getTrainAccuracy(data, target, trainFraction);
 		results[1] = bestTree.getTestAccuracy(data, target, trainFraction);
 		
-		System.out.println(generation + ": " + results[0] + " // " + results[1] + " // " + bestTree.id);
+		System.out.println(generation + ": " + results[0] + " // " + results[1] );
 		
 		population = nextGen;
 		
@@ -235,22 +224,6 @@ public class Population{
 		Tree dup = pop[pop.length-1];
 		pop[pop.length-1] = pop[bestIndex];
 		pop[bestIndex] = dup;
-	}
-
-	/**
-	 * Returns the tournament absolute size
-	 * @return number of individuals on the tournament
-	 */
-	private int getTournamentSize(){
-		return (int) (tournamentFraction * population.length);
-	}
-
-	/**
-	 * Returns the elite absolute size
-	 * @return number of individuals on the elite
-	 */
-	private int getElitismSize(){
-		return (int) (elitismFraction * population.length);
 	}
 
 	/**
@@ -290,7 +263,7 @@ public class Population{
 	 * @return Descendent of p1 and p2 through crossover
 	 */
 	private Tree[] crossover(Tree[] population) {
-			return PopulationFunctions.crossover(population, getTournamentSize(),data, target, trainFraction);
+			return PopulationFunctions.crossover(population, tournamentSize,data, target, trainFraction);
 	}
 	
 	/**
@@ -301,6 +274,6 @@ public class Population{
 	 * @return Descendent of p by mutation
 	 */
 	private Tree mutation(Tree[] population) {
-		return PopulationFunctions.mutation(population, getTournamentSize(), operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
+		return PopulationFunctions.mutation(population, tournamentSize, operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
 	}
 }

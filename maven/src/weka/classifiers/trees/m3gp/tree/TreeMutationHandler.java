@@ -1,10 +1,10 @@
-package m3gp.tree;
+package weka.classifiers.trees.m3gp.tree;
 
 import java.util.ArrayList;
 
-import m3gp.node.Node;
-import m3gp.node.NodeHandler;
-import m3gp.util.Mat;
+import weka.classifiers.trees.m3gp.node.Node;
+import weka.classifiers.trees.m3gp.node.NodeHandler;
+import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
  * 
@@ -27,7 +27,7 @@ public class TreeMutationHandler {
 			double t_rate, int max_depth, double [][] data, String [] target, double train_p) {
 		// 33.(3)% mutacao normal, 33.(3)% adicionar uma dimensao, 33.(3)% remover uma dimensao
 
-		ArrayList<Node> dim = clone(original.getDimensions());
+		ArrayList<Node> dim = original.cloneDimensions();
 
 		switch(Mat.random(dim.size()>1?3:2)) {
 		case 0:		//Mutacao normal
@@ -43,13 +43,5 @@ public class TreeMutationHandler {
 			break;
 		}
 		return new Tree(dim);
-	}
-	
-	private static ArrayList<Node> clone(ArrayList<Node> dim){
-		ArrayList<Node> ret = new ArrayList<Node>();
-		for(int i = 0; i < dim.size(); i++) {
-			ret.add(dim.get(i).clone());
-		}
-		return ret;
 	}
 }

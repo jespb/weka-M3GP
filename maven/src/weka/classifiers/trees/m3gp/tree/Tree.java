@@ -1,10 +1,10 @@
-package m3gp.tree;
+package weka.classifiers.trees.m3gp.tree;
 
 import java.util.ArrayList;
 
-import m3gp.node.Node;
-import m3gp.util.Arrays;
-import m3gp.util.Matrix;
+import weka.classifiers.trees.m3gp.node.Node;
+import weka.classifiers.trees.m3gp.util.Arrays;
+import weka.classifiers.trees.m3gp.util.Matrix;
 
 /**
  * 
@@ -13,9 +13,6 @@ import m3gp.util.Matrix;
  */
 public class Tree{
 	public static int trainSize;
-
-	private static int idGen=0;
-	public int id = idGen++;
 	
 	private ArrayList<Node> dimensions;
 	
@@ -41,11 +38,6 @@ public class Tree{
 	}
 
 	/**
-	 * Empty tree
-	 */
-	public Tree() {}
-
-	/**
 	 * Returns the TreeSTGP under it's String format
 	 */
 	public String toString(){
@@ -59,7 +51,7 @@ public class Tree{
 		return sb.toString();
 	}
 
-	public int size() {
+	public int getSize() {
 		int size = 0;
 		for(int i = 0; i < dimensions.size(); i++) {
 			size += dimensions.size();
@@ -67,7 +59,7 @@ public class Tree{
 		return size;
 	}
 
-	public void makeCluster(double [][] data, String [] target, double trainFract) {
+	private void makeCluster(double [][] data, String [] target, double trainFract) {
 		classes = new ArrayList<String>();
 		ArrayList<ArrayList<double []>> clusters = new ArrayList<ArrayList<double[]>>();
 		
@@ -126,7 +118,7 @@ public class Tree{
 		//TODO verificar
 	}
 	
-	public double calculate(int dimension, double [] d) {
+	private double calculate(int dimension, double [] d) {
 		return dimensions.get(dimension).calculate(d);
 	//	return 1/(1 - Math.pow(Math.E,-   dimensions.get(dimension).calculate(d)   ));
 	}
@@ -186,8 +178,12 @@ public class Tree{
 	public ArrayList<Node> getDimensions() {
 		return dimensions;
 	}
-
-	public String reference() {
-		return super.toString().split("@")[1];
+	
+	public ArrayList<Node> cloneDimensions(){
+		ArrayList<Node> ret = new ArrayList<Node>();
+		for(int i = 0; i < dimensions.size(); i++) {
+			ret.add(dimensions.get(i).clone());
+		}
+		return ret;
 	}
 }

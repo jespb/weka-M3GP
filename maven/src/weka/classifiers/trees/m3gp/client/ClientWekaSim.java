@@ -1,13 +1,13 @@
-package m3gp.client;
+package weka.classifiers.trees.m3gp.client;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import m3gp.population.Population;
-import m3gp.util.Arrays;
-import m3gp.util.Data;
-import m3gp.util.Files;
+import weka.classifiers.trees.m3gp.population.Population;
+import weka.classifiers.trees.m3gp.util.Arrays;
+import weka.classifiers.trees.m3gp.util.Data;
+import weka.classifiers.trees.m3gp.util.Files;
 
 /**
  * 
@@ -16,36 +16,34 @@ import m3gp.util.Files;
  */
 public class ClientWekaSim {
 
-	static int file = 0; // ST, GS
+	private static int file = 0; // ST, GS
 
-	static String xDataInputFilename = "Brazil_x.txt glass_x.csv cc_x.csv".split(" ")[file];
-	static String yDataInputFilename = "Brazil_y.txt glass_y.csv cc_y.csv".split(" ")[file];
-	static String resultOutputFilename = "fitovertime.csv";
-	static String treeType = "Ramped";
+	private static String xDataInputFilename = "datasets\\" + "Brazil_x.txt glass_x.csv cc_x.csv".split(" ")[file];
+	private static String yDataInputFilename = "datasets\\" + "Brazil_y.txt glass_y.csv cc_y.csv".split(" ")[file];
+	private static String resultOutputFilename = "fitovertime.csv";
+	private static String treeType = "Ramped";
 
-	static String [] operations = "+ - * /".split(" ");
-	static String [] terminals = null;
+	private static String [] operations = "+ - * /".split(" ");
+	private static String [] terminals = null;
 
-	static double trainPercentage = 0.70;
-	static double tournamentPercentage = 0.07;
-	static double elitismPercentage = 0.05;
+	private static double trainFraction = 0.70;
+	private static double tournamentFraction = 0.07;
+	private static double elitismFraction = 0.05;
 
-	static int numberOfGenerations = 50;
-	static int numberOfRuns = 1;
-	static int populationSize = 80;
-	static int maxDepth = 6;
+	private static int numberOfGenerations = 50;
+	private static int numberOfRuns = 1;
+	private static int populationSize = 80;
+	private static int maxDepth = 6;
 
-	static boolean shuffle = true;
+	private static boolean shuffleDataset = true;
 
-	static double [][] train_r = null;
-	static double [][] test_r = null;
-	static double [][] data = null;
-	static String [] target = null;
+	private static double [][] data = null;
+	private static String [] target = null;
 
 
 	// Variables
 	public static double [][] results = new double [numberOfGenerations][3];
-	static Population f = null;
+	private static Population f = null;
 
 	/**
 	 * main
@@ -78,9 +76,6 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	private static void init() throws IOException{
-		train_r = new double[numberOfGenerations][numberOfRuns];
-		test_r = new double[numberOfGenerations][numberOfRuns];
-
 		data = Data.readData(xDataInputFilename);
 		target = Data.readTarget(yDataInputFilename);
 	}
@@ -93,11 +88,11 @@ public class ClientWekaSim {
 	private static void run(int run) throws IOException{
 		System.out.println("Run " + run + ":");
 
-		if(shuffle)Arrays.shuffle(data, target);
+		if(shuffleDataset)Arrays.shuffle(data, target);
 
 		setTerm(data);
 
-		double [][] train = new double [(int) (data.length*trainPercentage)][data[0].length];
+		double [][] train = new double [(int) (data.length*trainFraction)][data[0].length];
 		double [][] test = new double [data.length - train.length][data[0].length];
 
 		for(int i = 0; i < data.length; i++){
@@ -107,10 +102,8 @@ public class ClientWekaSim {
 				test[i - train.length] = data[i];
 		}
 
-		setForest();
-		setTournamentSize();
-		setElitismSize();
-
+		setPopulation();
+		
 		f.train();
 
 /*
@@ -182,26 +175,13 @@ public class ClientWekaSim {
 	}
 
 	/**
-	 * Actualiza o tamanho dos torneios
-	 */
-	private static void setTournamentSize(){
-		f.setTournamentFraction(tournamentPercentage);
-	}
-
-	/**
-	 * Actualiza o tamanho do elitismo
-	 */
-	private static void setElitismSize(){
-		f.setElitismFraction(elitismPercentage);
-	}
-
-	/**
 	 * Cria uma nova floresta
 	 * @throws IOException
 	 */
-	private static void setForest() throws IOException{
+	private static void setPopulation() throws IOException{
 		f = new Population("", operations, 
 				terminals, maxDepth, data, target, 
-				populationSize,trainPercentage, treeType,numberOfGenerations);
+				populationSize,trainFraction, treeType,numberOfGenerations,
+				tournamentFraction, elitismFraction);
 	}
 }
