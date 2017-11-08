@@ -29,24 +29,7 @@ public class Arrays {
 		}
 		double [][] bInv = Matrix.inverseMatrix(b);
 		
-		/*
-		System.out.println("<-------->");
-		for(int y  = 0; y < b.length; y++) {
-			for(int z = 0; z < b[0].length;z++) {
-				System.out.print(b[y][z]+ ", ");
-			}
-			System.out.println();
-		}
-		System.out.println();
-		
-		for(int y  = 0; y < b.length; y++) {
-			for(int z = 0; z < b[0].length;z++) {
-				System.out.print(bInv[y][z]+ ", ");
-			}
-			System.out.println();
-		}
-		System.out.println();
-		*/
+		if( (bInv[0][0]+"").equals("NaN") )	bInv = Matrix.identity(bInv.length);
 		
 		double [][] a_bInv = Matrix.multiply(a,bInv);
 		double [][] result = Matrix.multiply(a_bInv, c);

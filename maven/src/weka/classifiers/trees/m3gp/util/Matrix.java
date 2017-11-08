@@ -4,6 +4,13 @@ import java.util.ArrayList;
 
 public class Matrix {
 
+	public static double[][] identity(int n){
+		double [][] m = new double[n][n];
+		for(int i = 0; i < n;i++)
+			m[i][i] = 1;
+		return m;
+	}
+	
 	/**
 	 * Calcula a matriz de covariancia do cluster
 	 * @param cluster
@@ -23,39 +30,12 @@ public class Matrix {
 		double [][] covMat = multiply(a,b);
 		
 				
-		/*for(int i = 0; i < a[0].length; i++) {
-			System.out.print(a[0][i] + ", ");
-		}
-		System.out.println();
-		
-		for(int i = 0; i < b.length; i++) {
-			System.out.print(b[i][0] + ", ");
-		}
-		System.out.println();*/
-/*
-		for(int y = 0; y < covMat.length ; y++) {
-			for(int x = 0; x < covMat[0].length ; x ++) {
-				System.out.print(covMat[y][x] + ",");
-			}
-			System.out.println();
-		}
-		System.out.println();
-		*/
-
 	
 		for(int y= 0; y < covMat.length; y++){
 			for(int x = 0; x < covMat.length; x++){
 					covMat[y][x] /= cluster.size();
 			}
 		}
-		
-		
-		/*try {
-			Thread.sleep(50000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
 
 		return covMat;
 	}
