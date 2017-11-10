@@ -29,7 +29,14 @@ public class Arrays {
 		}
 		double [][] bInv = Matrix.inverseMatrix(b);
 		
-		if( (bInv[0][0]+"").equals("NaN") )	bInv = Matrix.identity(bInv.length);
+		if( (bInv[0][0]+"").equals("NaN") )	{
+			bInv = Matrix.moorepenroseInverseMatrix(b);
+			//bInv = Matrix.minorDiagonal(bInv.length);
+			//bInv = Matrix.transposta(b);
+			//bInv = b;
+			//bInv = Matrix.fill(bInv.length,  1);
+			//bInv = Matrix.identity(bInv.length);
+		}
 		
 		double [][] a_bInv = Matrix.multiply(a,bInv);
 		double [][] result = Matrix.multiply(a_bInv, c);
