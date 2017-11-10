@@ -8,9 +8,9 @@ public class Teste {
 
 		double [][] pimpm1 = Matrix.moorepenroseInverseMatrix(m1);
 
-		printMatrix(m1);System.out.println();
-		printMatrix(pimpm1);System.out.println();
-		printMatrix(Matrix.multiply(Matrix.multiply(m1,pimpm1),m1));
+		//printMatrix(m1);System.out.println();
+		//printMatrix(pimpm1);System.out.println();
+		printMatrix(Matrix.subtract(Matrix.multiply(Matrix.multiply(m1,pimpm1),m1),m1));
 	}
 	
 	private static void printMatrix(double[][]m) {

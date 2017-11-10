@@ -19,7 +19,6 @@ public class Arrays {
 		// DM(x) = (x - mu)^T * S^-1 * (x-mu)
 		// DM(x) = a * bInv * c
 		
-		
 		//Calcula a e c
 		double[][]a= new double[1][x.length];
 		double[][]c= new double[x.length][1];
@@ -27,10 +26,13 @@ public class Arrays {
 			a[0][i] = x[i]-mu[i];
 			c[i][0] = x[i]-mu[i];
 		}
-		double [][] bInv = Matrix.inverseMatrix(b);
+		double [][] bInv = Matrix.inverseMatrix(Matrix.clone(b));
 		
 		if( (bInv[0][0]+"").equals("NaN") )	{
 			bInv = Matrix.moorepenroseInverseMatrix(b);
+			if(bInv==null) {
+				bInv = b;
+			}
 			//bInv = Matrix.minorDiagonal(bInv.length);
 			//bInv = Matrix.transposta(b);
 			//bInv = b;

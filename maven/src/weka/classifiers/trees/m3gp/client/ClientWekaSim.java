@@ -16,7 +16,7 @@ import weka.classifiers.trees.m3gp.util.Files;
  */
 public class ClientWekaSim {
 
-	private static int file = 1; // ST, GS
+	private static int file = 0; // ST, GS
 
 	private static String xDataInputFilename = "datasets\\" + "Brazil_x.txt glass_x.csv cc_x.csv".split(" ")[file];
 	private static String yDataInputFilename = "datasets\\" + "Brazil_y.txt glass_y.csv cc_y.csv".split(" ")[file];
@@ -31,7 +31,7 @@ public class ClientWekaSim {
 	private static double elitismFraction = 0.05;
 
 	private static int numberOfGenerations = 50;
-	private static int numberOfRuns = 50;
+	private static int numberOfRuns = 1;
 	private static int populationSize = 80;
 	private static int maxDepth = 6;
 

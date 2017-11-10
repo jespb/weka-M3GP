@@ -21,19 +21,21 @@ public class Matrix {
 
 		// Full rank Cholesky factorization of A
 		diagA = diagonal(a);
-		tol = min(diagA)*Math.pow(10, -9);
+		tol = min(diagA, 0)*Math.pow(10, -9);
+		tol = Math.max(tol, Math.pow(10, -9));
 		l = fill(a.length, 0);
 		r=-1;
 		for(int k = 0; k <= n; k++) {
+			//System.out.println(r);
 			r++;
 			double [][] a1,l1,l2,lsect;
 			a1 = section(a,new int[] {k,n,k,k});
 			// Note: for r=0, the subtracted vector is zero
 			if(r>0) {
-				System.out.println("k = " + k+ ", r = "+r);
+				//System.out.println("k = " + k+ ", r = "+r);
 				l1 = section(l,new int[] {k,n,0,r});
-				l2 = section(l,new int[] {k,0,r,r});
-				lsect = transpose(multiply(subtract(a1,l1),l2));
+				l2 = transpose(section(l,new int[] {k,k,0,r}));
+				lsect = subtract(a1,multiply(l1,l2));
 			}else {
 				lsect = a1;
 			}
@@ -50,7 +52,10 @@ public class Matrix {
 				r--;
 			}
 		}
-		l = section(l, new int[] {0,l.length-1,0,Math.max(r,0)});
+		if(r==-1) {
+			return null;
+		}
+		l = section(l, new int[] {0,l.length-1,0,r});
 		double [][] y =inverseMatrix(multiply(transpose(l),l));
 		double [][] ret;
 		if (transpose)
@@ -78,13 +83,15 @@ public class Matrix {
 	/**
 	 * Minimum value on the matrix
 	 * @param a
+	 * @param i 
 	 * @return
 	 */
-	public static double min(double[][] a) {
-		double min = a[0][0];
+	public static double min(double[][] a, int m) {
+		double min = -1;
 		for(int y = 0; y < a.length; y++) {
 			for(int x = 0; x < a[0].length; x++) {
-				min = Math.min(min, a[y][x]);
+				if(a[y][x]>min && a[y][x]>m)
+					min = a[y][x];
 			}
 		}
 		return min;
@@ -314,5 +321,25 @@ public class Matrix {
 					a[index[i]][l] -= pj*a[index[j]][l];
 			}
 		}
+	}
+	
+	//TODO delete below ------------------
+	public static void printMatrix(double[][]m) {
+		for(int y = 0; y < m.length; y++) {
+			for(int x = 0; x < m[0].length; x++) {
+				System.out.print(m[y][x]+"\t");
+			}
+			System.out.println();
+		}
+	}
+
+	public static double[][] clone(double[][] b) {
+		double [][] ret = new double[b.length][b[0].length];
+		for(int y = 0; y < b.length; y++) {
+			for(int x = 0; x < b[0].length; x++) {
+				ret[y][x]=b[y][x];
+			}
+		}
+		return ret;
 	}
 }
