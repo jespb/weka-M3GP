@@ -1,5 +1,8 @@
 package weka.classifiers.trees.m3gp.util;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 /**
  * 
  * @author João Batista, jbatista@di.fc.ul.pt
@@ -31,5 +34,10 @@ public class Mat{
 				return Double.parseDouble(s);
 			}
 		}
+	}
+
+	public static double median(ArrayList<Double> al) {
+		Collections.sort(al);
+		return al.get((int)(al.size()/2));
 	}
 }

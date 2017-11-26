@@ -72,7 +72,7 @@ public class Matrix {
 	 * @param to matrix to be changed
 	 * @param coor [y,x] coordinates
 	 */
-	public static void copyTo(double[][] from, double[][] to, int[] coor) {
+	private static void copyTo(double[][] from, double[][] to, int[] coor) {
 		for(int y = coor[0]; y < coor[0]+from.length; y++) {
 			for(int x = coor[1]; x < coor[1]+from[0].length; x++) {
 				to[y][x] = from[y-coor[0]][x-coor[1]];
@@ -81,12 +81,12 @@ public class Matrix {
 	}
 
 	/**
-	 * Minimum value on the matrix
+	 * Minimum value on the matrix bigger than m
 	 * @param a
 	 * @param i 
 	 * @return
 	 */
-	public static double min(double[][] a, int m) {
+	private static double min(double[][] a, int m) {
 		double min = -1;
 		for(int y = 0; y < a.length; y++) {
 			for(int x = 0; x < a[0].length; x++) {

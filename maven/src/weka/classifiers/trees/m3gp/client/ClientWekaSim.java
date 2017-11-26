@@ -3,11 +3,13 @@ package weka.classifiers.trees.m3gp.client;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import weka.classifiers.trees.m3gp.population.Population;
 import weka.classifiers.trees.m3gp.util.Arrays;
 import weka.classifiers.trees.m3gp.util.Data;
 import weka.classifiers.trees.m3gp.util.Files;
+import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
  * 
@@ -16,11 +18,12 @@ import weka.classifiers.trees.m3gp.util.Files;
  */
 public class ClientWekaSim {
 
-	private static int file = 0; // ST, GS
+	private static int file = 1; // ST, GS
 
 	private static String xDataInputFilename = "datasets\\" + "Brazil_x.txt glass_x.csv cc_x.csv".split(" ")[file];
 	private static String yDataInputFilename = "datasets\\" + "Brazil_y.txt glass_y.csv cc_y.csv".split(" ")[file];
 	private static String resultOutputFilename = "fitovertime.csv";
+	private static String dimensionsOutputFilename = "dimensions.csv";
 	private static String treeType = "Ramped";
 
 	private static String [] operations = "+ - * /".split(" ");
@@ -30,9 +33,9 @@ public class ClientWekaSim {
 	private static double tournamentFraction = 0.07;
 	private static double elitismFraction = 0.05;
 
-	private static int numberOfGenerations = 50;
-	private static int numberOfRuns = 1;
-	private static int populationSize = 80;
+	private static int numberOfGenerations = 40;
+	private static int numberOfRuns = 15;
+	private static int populationSize = 40;
 	private static int maxDepth = 6;
 
 	private static boolean shuffleDataset = true;
@@ -42,7 +45,9 @@ public class ClientWekaSim {
 
 
 	// Variables
-	public static double [][] results = new double [numberOfGenerations][3];
+	@SuppressWarnings("unchecked")
+	public static ArrayList<Double>[][] results = new ArrayList[numberOfGenerations][4];// treino, teste, dimensoes, tamanho
+	public static ArrayList<Double>[] al_dim = new ArrayList[numberOfGenerations];// dimensoes
 	private static Population f = null;
 
 	/**
@@ -51,6 +56,13 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
+		for ( int y  = 0; y < results.length; y++) {
+			for ( int x = 0; x < results[0].length; x++) {
+				results [y][x] = new ArrayList<Double>();
+			}
+			al_dim[y] = new ArrayList<Double>();
+		}
+		
 		treatArgs(args);
 		init();
 
@@ -62,13 +74,31 @@ public class ClientWekaSim {
 
 
 		BufferedWriter out = new BufferedWriter(new FileWriter(resultOutputFilename+".tmp"));
-		out.write("Treino;Teste\n");
+		out.write("Treino;Teste;n_dimensoes;n_size\n");
+		double treino,teste,n_dim, n_nodes;
 		for(int i = 0; i < results.length; i++){
-			if(results[i][2] !=0)
-				out.write(results[i][0]/results[i][2] + ";" + results[i][1]/results[i][2] + "\n");
+			treino = Mat.median(results[i][0]);
+			teste = Mat.median(results[i][1]);
+			n_dim = Mat.median(results[i][2]);
+			n_nodes = Mat.median(results[i][3]);
+			out.write(treino + ";" + teste +";" + n_dim +";" + n_nodes + "\n");
 		}
 		out.close();
 		Files.fixCSV(resultOutputFilename);
+		
+		out = new BufferedWriter(new FileWriter(dimensionsOutputFilename+".tmp"));
+		for( int i = 0; i < numberOfRuns; i++) {
+			out.write("Run " + i + ";");
+		}
+		out.write("\n");
+		for (int y = 0; y < al_dim.length; y++) {
+			for(int x = 0; x < al_dim[y].size(); x++) {
+				out.write(al_dim[y].get(x)+";");
+			}
+			out.write("\n");
+		}
+		out.close();
+		Files.fixCSV(dimensionsOutputFilename);
 	}
 
 	/**
@@ -105,40 +135,6 @@ public class ClientWekaSim {
 		setPopulation();
 		
 		f.train();
-
-/*
-		// Este bloco está a certificarse que as previsoes sao consistentes com o treino
-		double acc = 0;
-		int hit = 0;
-		String prediction = "";
-		for(int i = 0; i < test.length; i++){
-			prediction= f.predict(test[i]) ;
-			acc += prediction.equals(target[train.length + i]) ? 1:0;
-			if((i+1)%400 ==0)
-				System.out.println((i+1) + "/" + test.length);
-		}
-		acc /= 1.0 * test.length;
-		acc = Math.sqrt(acc);
-
-		
-		System.out.println("test binary classification hits: " + hit +" out of " + test.length);
-		System.out.println("test RMSE calculated: " + acc);
-
-		acc = 0;
-		hit = 0;
-
-		for(int i = 0; i < train.length; i++){
-			prediction = f.predict(train[i]);
-			acc+= prediction.equals(target[i]) ? 1:0;
-			if((i+1)%400 ==0)
-				System.out.println((i+1) + "/" + train.length);
-		}
-		acc /= 1.0 * train.length;
-		acc = Math.sqrt(acc);
-
-		System.out.println("train binary classification hits: " + hit +" out of " + train.length);
-		System.out.println("train RMSE calculated: " + acc);
-*/
 		
 		System.out.println(f);
 	}

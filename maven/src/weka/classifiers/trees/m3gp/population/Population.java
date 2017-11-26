@@ -114,9 +114,11 @@ public class Population{
 			if(generation%5 == 0)
 				message("Generation " + generation + "...");
 			double [] result = nextGeneration(generation);
-			ClientWekaSim.results[generation][0]+=result[0];
-			ClientWekaSim.results[generation][1]+=result[1];
-			ClientWekaSim.results[generation][2]++;
+			ClientWekaSim.results[generation][0].add(result[0]);
+			ClientWekaSim.results[generation][1].add(result[1]);
+			ClientWekaSim.results[generation][2].add(result[2]);
+			ClientWekaSim.results[generation][3].add(result[3]);
+			ClientWekaSim.al_dim[generation].add(result[2]);
 			generation ++;
 		}
 		return null;
@@ -133,7 +135,7 @@ public class Population{
 	 * Evolves the classifier by one generation
 	 */
 	public double[] nextGeneration(int generation) throws IOException{
-		double [] results = new double[2];
+		double [] results = new double[4];
 
 		Tree [] nextGen = new Tree [population.length];
 		double [] fitnesses = new double[population.length];
@@ -146,10 +148,6 @@ public class Population{
 		}
 
 		Arrays.mergeSortBy(population, fitnesses);
-		/*for(int i = 0; i < fitnesses.length; i++) {
-			System.out.println(fitnesses[i] + "         " + population[i].getTrainAccuracy(data, target,trainFraction) + "    " + population[i].id);//TODO REEEEEE
-		}*/
-		//System.out.println(fitnesses[0]);
 		
 		//Prunning
 		double d1, d2;
@@ -188,16 +186,17 @@ public class Population{
 			setBestToLast(population);
 		}
 			
-		//bestTree = population[population.length-1];
-		//bestTree = nextGen[0];
+		bestTree = nextGen[0];
 		
 		//Sets the bestTree to the generation best if it has a better test error 
-		if(bestTree == null || nextGen[0].getTestAccuracy(data, target, trainFraction)>bestTree.getTestAccuracy(data, target, trainFraction)) {
-			bestTree = nextGen[0];//population[population.length-1];
-		}
+		//if(bestTree == null || nextGen[0].getTestAccuracy(data, target, trainFraction)>bestTree.getTestAccuracy(data, target, trainFraction)) {
+		//	bestTree = nextGen[0];//population[population.length-1];
+		//}
 		
 		results[0] = bestTree.getTrainAccuracy(data, target, trainFraction);
 		results[1] = bestTree.getTestAccuracy(data, target, trainFraction);
+		results[2] = bestTree.getDimensions().size();
+		results[3] = bestTree.getSize();
 		
 		System.out.println(generation + ": " + results[0] + " // " + results[1] );
 		
