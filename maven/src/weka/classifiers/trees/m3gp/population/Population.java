@@ -171,7 +171,7 @@ public class Population{
 		Tree[] cross;
 		for(int i = elitismSize; i < nextGen.length; i++){
 
-			if(Math.random() < 0.75) {//TODO default = 0.75
+			if(Math.random() < 0.50) {//TODO default = 0.75
 				cross = crossover(population);
 				for(int j = i; j < i+2 && j<nextGen.length; j++) {
 					nextGen[j] = cross[j-i];

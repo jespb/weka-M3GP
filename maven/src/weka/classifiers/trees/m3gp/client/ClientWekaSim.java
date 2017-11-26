@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import weka.classifiers.trees.m3gp.population.Population;
 import weka.classifiers.trees.m3gp.util.Arrays;
 import weka.classifiers.trees.m3gp.util.Data;
-import weka.classifiers.trees.m3gp.util.Files;
 import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
@@ -20,22 +19,21 @@ public class ClientWekaSim {
 
 	private static int file = 1; // ST, GS
 
-	private static String xDataInputFilename = "datasets\\" + "Brazil_x.txt glass_x.csv cc_x.csv".split(" ")[file];
-	private static String yDataInputFilename = "datasets\\" + "Brazil_y.txt glass_y.csv cc_y.csv".split(" ")[file];
-	private static String resultOutputFilename = "fitovertime.csv";
-	private static String dimensionsOutputFilename = "dimensions.csv";
+	private static String datasetFilename = "datasets\\" + "Brazil.csv heart.csv waveform.csv".split(" ")[file];
+	private static String resultOutputFilename = "fitovertime("+"Brazil.csv heart.csv waveform.csv".split(" ")[file]+").csv";
+	private static String dimensionsOutputFilename = "dimensions("+"Brazil.csv heart.csv waveform.csv".split(" ")[file]+").csv";
 	private static String treeType = "Ramped";
 
 	private static String [] operations = "+ - * /".split(" ");
 	private static String [] terminals = null;
 
 	private static double trainFraction = 0.70;
-	private static double tournamentFraction = 0.07;
-	private static double elitismFraction = 0.05;
+	private static double tournamentFraction = 0.01;
+	private static double elitismFraction = 0.002;
 
-	private static int numberOfGenerations = 40;
-	private static int numberOfRuns = 15;
-	private static int populationSize = 40;
+	private static int numberOfGenerations = 50;
+	private static int numberOfRuns = 20;
+	private static int populationSize = 500;
 	private static int maxDepth = 6;
 
 	private static boolean shuffleDataset = true;
@@ -73,7 +71,7 @@ public class ClientWekaSim {
 		System.out.println((System.currentTimeMillis() - time) + "ms");
 
 
-		BufferedWriter out = new BufferedWriter(new FileWriter(resultOutputFilename+".tmp"));
+		BufferedWriter out = new BufferedWriter(new FileWriter(resultOutputFilename));
 		out.write("Treino;Teste;n_dimensoes;n_size\n");
 		double treino,teste,n_dim, n_nodes;
 		for(int i = 0; i < results.length; i++){
@@ -84,9 +82,8 @@ public class ClientWekaSim {
 			out.write(treino + ";" + teste +";" + n_dim +";" + n_nodes + "\n");
 		}
 		out.close();
-		Files.fixCSV(resultOutputFilename);
 		
-		out = new BufferedWriter(new FileWriter(dimensionsOutputFilename+".tmp"));
+		out = new BufferedWriter(new FileWriter(dimensionsOutputFilename));
 		for( int i = 0; i < numberOfRuns; i++) {
 			out.write("Run " + i + ";");
 		}
@@ -98,7 +95,6 @@ public class ClientWekaSim {
 			out.write("\n");
 		}
 		out.close();
-		Files.fixCSV(dimensionsOutputFilename);
 	}
 
 	/**
@@ -106,8 +102,9 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	private static void init() throws IOException{
-		data = Data.readData(xDataInputFilename);
-		target = Data.readTarget(yDataInputFilename);
+		Object [] datatarget = Data.readDataTarget(datasetFilename);
+		data = (double[][]) datatarget [0];
+		target = (String[]) datatarget [1];
 	}
 
 	/**
