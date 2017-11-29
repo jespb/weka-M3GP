@@ -10,6 +10,8 @@ import java.io.IOException;
  *
  */
 public class Data {
+	private static String label_separator = ",";
+	
 	public static Object[] readDataTarget(String filename) throws IOException {
 		double [][] data;
 		String [] target;
@@ -17,7 +19,7 @@ public class Data {
 	
 		String line = in.readLine();
 		int n_lines = 1;
-		int n_labels = line.split(";").length;
+		int n_labels = line.split(label_separator).length;
 		for(line = in.readLine();line != null; line = in.readLine(), n_lines++);
 		in.close();
 		
@@ -27,7 +29,7 @@ public class Data {
 		in = new BufferedReader(new FileReader(filename));
 		int i = 0;
 		for(line = in.readLine(); line != null; line = in.readLine(), i++){
-			String [] split = line.split(";");
+			String [] split = line.split(label_separator);
 			for(int j = 0; j < split.length-1; j++)
 				data[i][j] = Mat.parseDouble(split[j]);
 			target[i] = split[n_labels-1];

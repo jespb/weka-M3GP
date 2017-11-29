@@ -14,7 +14,8 @@ public class Node implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	String v;
+	private static final String[] operations = "+ - * /".split(" ");
+	double v;
 	Node l;
 	Node r;
 	
@@ -22,7 +23,7 @@ public class Node implements Serializable{
 	 * Basic constructor
 	 * @param value
 	 */
-	public Node(String value){
+	public Node(double value){
 		v = value;
 	}
 
@@ -32,7 +33,7 @@ public class Node implements Serializable{
 	 * @param right
 	 * @param op
 	 */
-	public Node(Node left, Node right, String op){
+	public Node(Node left, Node right, double op){
 		l = left;
 		r = right;
 		v = op;
@@ -47,9 +48,10 @@ public class Node implements Serializable{
 	 */
 	public Node(String [] op, String [] term, double t_rate, int depth){
 		if(Math.random() < t_rate || depth <= 0){
-			v = term[Mat.random(term.length)];
+			int index = Mat.random(term.length);
+			v = index < term.length-1? index :Math.random();
 		}else{
-			v = op[Mat.random(op.length)];
+			v = Mat.random(op.length);
 			l = new Node(op, term, t_rate, depth-1);
 			r = new Node(op, term, t_rate, depth-1);
 		}
@@ -62,21 +64,24 @@ public class Node implements Serializable{
 	 */
 	public double calculate(double [] vals){
 		if(isLeaf()){
-			int index = Integer.parseInt(v.substring(1));
-			return vals[index];
+			if (v % 1 != 0)
+				return v;
+			else
+				return vals[(int)v];
 		}else{
 			double d = 0;
-			switch(v){
-			case "+":
+			int v2 = (int)v;
+			switch(v2){
+			case 0://   +
 				d = l.calculate(vals)+r.calculate(vals);
 				break;
-			case "-":
+			case 1://   -
 				d = l.calculate(vals)-r.calculate(vals);
 				break;
-			case "*":
+			case 2://   *
 				d = l.calculate(vals)*r.calculate(vals);
 				break;
-			case "/":
+			case 3://   //(protected division)
 				double div = r.calculate(vals);
 				d = l.calculate(vals)/(div != 0 ? div : 1);
 				break;
@@ -112,9 +117,12 @@ public class Node implements Serializable{
 	 */
 	public String toString(){
 		if(isLeaf()){
-			return v;
+			if (v<1)
+				return v+"";
+			else
+				return "x"+(int)v;
 		}else{
-			return "( " + l + " " + v + " " + r + " )";
+			return "( " + l + " " + operations[(int)v] + " " + r + " )";
 		}
 	}
 	
@@ -126,5 +134,13 @@ public class Node implements Serializable{
 	 */
 	private boolean isLeaf(){
 		return l==null;// &&r==null;
+	}
+
+	public int getDepth() {
+		if(isLeaf()) {
+			return 1;
+		}else {
+			return 1 + Math.max(l.getDepth(), r.getDepth());
+		}
 	}
 }

@@ -29,7 +29,7 @@ public class NodeHandler {
 	}
 
 	public static void swap(Node r1, Node r2) {
-		Node tmp = new Node("dup");
+		Node tmp = new Node(999999);
 		redirect(tmp, r1);
 		redirect(r1,r2);
 		redirect(r2,tmp);

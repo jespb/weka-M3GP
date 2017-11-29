@@ -119,6 +119,9 @@ public class Population{
 			ClientWekaSim.results[generation][2].add(result[2]);
 			ClientWekaSim.results[generation][3].add(result[3]);
 			ClientWekaSim.al_dim[generation].add(result[2]);
+			ClientWekaSim.al_size[generation].add(result[3]);
+			ClientWekaSim.al_fit_tr[generation].add(result[0]);
+			ClientWekaSim.al_fit_te[generation].add(result[1]);
 			generation ++;
 		}
 		return null;
@@ -141,25 +144,25 @@ public class Population{
 		double [] fitnesses = new double[population.length];
 
 		// Obtencao de fitness
+		long timeFitness = System.currentTimeMillis();
 		for (int i = 0; i < population.length; i++){
 			fitnesses[i] = population[i].getTrainAccuracy(data, target,trainFraction);
-		//	System.out.println(population[i]);
-			//System.out.println(fitnesses[i]);
 		}
+		timeFitness = System.currentTimeMillis()-timeFitness;
 
 		Arrays.mergeSortBy(population, fitnesses);
 		
-		//Prunning
+		//Pruning 			//TODO fix
+		long timePruning = System.currentTimeMillis();
 		double d1, d2;
 		//d1 = population[population.length-1].getTrainAccuracy(data, target,trainFraction);
 		//System.out.println("    "+d1 +" "+ population[population.length-1].size());
-		
 		nextGen[0] = TreePruningHandler.prun(population[population.length-1],data,target,trainFraction);
-		
 		//d2 = nextGen[0].getTrainAccuracy(data, target,trainFraction);
 		//System.out.println("    "+d2 + " " + nextGen[0].size());
 		//if(d2<d1)System.out.println("RRREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
 		//if(d2>d1)System.out.println("WWWWWWWWWWOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+		timePruning = System.currentTimeMillis()-timePruning;
 		
 		// Elitismo 
 		for(int i = 1; i < elitismSize; i++ ){
@@ -168,19 +171,28 @@ public class Population{
 		
 		
 		//Selecao e reproducao
+
+		long timeSelectAndCross = System.currentTimeMillis();
 		Tree[] cross;
 		for(int i = elitismSize; i < nextGen.length; i++){
-
-			if(Math.random() < 0.50) {//TODO default = 0.75
+			if(Math.random() < 0.50) {//TODO default = 0.50
 				cross = crossover(population);
-				for(int j = i; j < i+2 && j<nextGen.length; j++) {
-					nextGen[j] = cross[j-i];
+				nextGen[i] = cross[0];
+				if (i+1 < nextGen.length) {
+					nextGen[i+1] = cross[1];
 				}
 				i++;
+				if(cross[0].getDepth()>17 || cross[1].getDepth()>17) {
+					i -= 2;
+				}
 			}else {
 				nextGen[i] = mutation(population);
+				if (nextGen[i].getDepth() > 17) {
+					i --;
+				}
 			}
 		}
+		timeSelectAndCross = System.currentTimeMillis()-timeSelectAndCross;
 		
 		if(elitismSize == 0) {
 			setBestToLast(population);
@@ -188,17 +200,12 @@ public class Population{
 			
 		bestTree = nextGen[0];
 		
-		//Sets the bestTree to the generation best if it has a better test error 
-		//if(bestTree == null || nextGen[0].getTestAccuracy(data, target, trainFraction)>bestTree.getTestAccuracy(data, target, trainFraction)) {
-		//	bestTree = nextGen[0];//population[population.length-1];
-		//}
-		
 		results[0] = bestTree.getTrainAccuracy(data, target, trainFraction);
 		results[1] = bestTree.getTestAccuracy(data, target, trainFraction);
 		results[2] = bestTree.getDimensions().size();
 		results[3] = bestTree.getSize();
 		
-		System.out.println(generation + ": " + results[0] + " // " + results[1] );
+		System.out.println(generation + ": " + results[0] + " // " + results[1] + "///" + timeFitness + "//" + timePruning + "//" + timeSelectAndCross);
 		
 		population = nextGen;
 		

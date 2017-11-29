@@ -179,6 +179,14 @@ public class Tree{
 		return dimensions;
 	}
 	
+	public int getDepth() {
+		int depth = dimensions.get(0).getDepth();
+		for(int i = 1; i < dimensions.size(); i++) {
+			depth = Math.max(depth, dimensions.get(i).getDepth());
+		}
+		return depth;
+	}
+	
 	public ArrayList<Node> cloneDimensions(){
 		ArrayList<Node> ret = new ArrayList<Node>();
 		for(int i = 0; i < dimensions.size(); i++) {
