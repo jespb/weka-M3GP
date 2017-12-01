@@ -1,0 +1,28 @@
+Requirements:
+	- Any Java IDE that can import Maven projects installed (e.g. Eclipse)
+	- Java 1.8 installed
+	- Weka installed
+
+Instalation steps: (Skip steps 10 and 13 if you have admin priviledges)
+	1 - Create a temporary folder on your Desktop, name it tmp
+	2 - Open your weka directory (usualy C:/Programs/Weka-3-8)
+	3 - Open the file weka-src.jar as an archive (using 7zip/WinRar/...)
+	4 - Copy the contents of weka-src.jar to the tmp folder
+	5 - Open your Java IDE
+	6 - Import the tmp folder as a Maven project
+	7 - Copy the classifier src/ folder to the Maven project
+	8 - Run the project (This is only meant to compile the code)
+	9 - Return to your weka directory
+	10- Move the file weka.jar to your Desktop 
+	11- Open the weka.jar as an archive
+	12- Add the contents of tmp/build/classes/ to the weka.jar
+	13- Move the weka.jar back to the weka directory
+
+How to run the classifier:
+	1 - Make sure you have everything on the requirements
+	2 - Follow the Instalation steps
+	3 - Use weka normaly, the classifier has already been add
+	4 - If you want to change the variables of the classifier:
+		4.1 - Select the classifier
+		4.2 - Right click the arguments
+		4-3 - Click "edit configurations"
