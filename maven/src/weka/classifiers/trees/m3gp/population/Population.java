@@ -13,7 +13,7 @@ import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
  * 
- * @author Jo�o Batista, jbatista@di.fc.ul.pt
+ * @author Joao Batista, jbatista@di.fc.ul.pt
  *
  */
 public class Population{
@@ -85,7 +85,7 @@ public class Population{
 		switch(populationType) {
 		case "Ramped":
 			for(int i = 0; i < populationSize; i++){
-				if( i < (int)(populationSize * 0.5))
+				if( i < (int)(populationSize * 0.75))
 					population[i] = new Tree(op, term, 0 , Math.max(i%maxDepth,2));
 				else
 					population[i] = new Tree(op, term, terminalRateForGrow , Math.max(i%maxDepth,2));
@@ -134,11 +134,21 @@ public class Population{
 		return generation < maxGeneration;
 	}	
 
+	boolean done = false;
 	/**
 	 * Evolves the classifier by one generation
 	 */
 	public double[] nextGeneration(int generation) throws IOException{
 		double [] results = new double[4];
+		if (done) {
+			results[0] = bestTree.getTrainAccuracy(data, target, trainFraction);
+			results[1] = bestTree.getTestAccuracy(data, target, trainFraction);
+			results[2] = bestTree.getDimensions().size();
+			results[3] = bestTree.getSize();
+			System.out.println(generation + ": " + results[0] + " // " + results[1] + "/// (done)");
+			return results;
+			
+		}
 
 		Tree [] nextGen = new Tree [population.length];
 		double [] fitnesses = new double[population.length];
@@ -177,14 +187,18 @@ public class Population{
 		for(int i = elitismSize; i < nextGen.length; i++){
 			if(Math.random() < 0.50) {//TODO default = 0.50
 				cross = crossover(population);
-				nextGen[i] = cross[0];
-				if (i+1 < nextGen.length) {
-					nextGen[i+1] = cross[1];
+				if(cross[0].getDepth() <= 17) {
+					nextGen[i] = cross[0];	
+				}else {
+					i--;
+				}if(i+1 < nextGen.length) {
+					if(cross[1].getDepth()<=17) {
+						nextGen[i+1] = cross[1];
+					}else {
+						i--;
+					}
 				}
 				i++;
-				if(cross[0].getDepth()>17 || cross[1].getDepth()>17) {
-					i -= 2;
-				}
 			}else {
 				nextGen[i] = mutation(population);
 				if (nextGen[i].getDepth() > 17) {
@@ -208,6 +222,10 @@ public class Population{
 		System.out.println(generation + ": " + results[0] + " // " + results[1] + "///" + timeFitness + "//" + timePruning + "//" + timeSelectAndCross);
 		
 		population = nextGen;
+		
+		if(results[0] == 1) {
+			done = true;
+		}
 		
 		return results;
 	}

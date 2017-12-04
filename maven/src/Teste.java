@@ -4,13 +4,21 @@ public class Teste {
 	public static void main(String[] args) {
 		//double [][] m = Matrix.fill(1, -1);
 		
-		double [][] m1 = randomMat(6);
-
-		double [][] pimpm1 = Matrix.moorepenroseInverseMatrix(m1);
+		double [][] m1 = randomMat(500);
+		double [][] m2 = randomMat(500);
+		
+		long time = System.currentTimeMillis();
+		Matrix.multiplyTransposeOfBy(m1, m2);
+		System.out.println("Funcao nova: " + (System.currentTimeMillis()-time));
+	
+		time = System.currentTimeMillis();
+		Matrix.multiply(Matrix.transpose(m1),m2);
+		System.out.println("Funcao velha: " + (System.currentTimeMillis()-time));
+		//double [][] pimpm1 = Matrix.moorepenroseInverseMatrix(m1);
 
 		//printMatrix(m1);System.out.println();
 		//printMatrix(pimpm1);System.out.println();
-		printMatrix(Matrix.subtract(Matrix.multiply(Matrix.multiply(m1,pimpm1),m1),m1));
+		//printMatrix(Matrix.subtract(Matrix.multiply(Matrix.multiply(m1,pimpm1),m1),m1));
 	}
 	
 	private static void printMatrix(double[][]m) {

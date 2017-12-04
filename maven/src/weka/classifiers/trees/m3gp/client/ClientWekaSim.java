@@ -19,7 +19,7 @@ public class ClientWekaSim {
 
 	private static int file = 1; // ST, GS
 
-	private static String filename = "Brazil.csv heart.csv waveform.csv vowel.csv".split(" ")[file];
+	private static String filename = "brazil.csv heart.csv waveform.csv vowel.csv".split(" ")[file];
 	private static String datasetFilename = "datasets\\" + filename;
 	private static String treeType = "Ramped";
 
@@ -30,8 +30,8 @@ public class ClientWekaSim {
 	private static double tournamentFraction = 0.01;
 	private static double elitismFraction = 0.002 ;
 
-	private static int numberOfGenerations = 100;
-	private static int numberOfRuns = 15;
+	private static int numberOfGenerations = 20;
+	private static int numberOfRuns = 10;
 	private static int populationSize = 500;
 	private static int maxDepth = 6;
 

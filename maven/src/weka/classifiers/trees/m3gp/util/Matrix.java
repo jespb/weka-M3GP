@@ -3,6 +3,36 @@ package weka.classifiers.trees.m3gp.util;
 import java.util.ArrayList;
 
 public class Matrix {
+	public static double[][] multiply3(double[][] m1, double[][]m2, double[][]m3){
+		double[][] ret= new double[m1.length][m3[0].length];
+		int x,y,z;
+		int ylen =ret.length, xlen=ret[0].length;
+		for(y = 0; y < ylen; y++) {
+			for(x = 0; x < xlen; x++) {
+				
+			}
+		}
+		return ret;
+	}
+	
+	public static double[][] multiplyTransposeOfBy(double [][] d1, double [][] d2){
+		double [][] ret = new double[d1[0].length][d2[0].length];
+		int xlen = ret[0].length;
+		int ylen = ret.length;
+		int ilen = d2.length;
+		int y,x,i;
+		double acc;
+		for(y = 0; y < ylen; y++) {
+			for(x = 0; x < xlen; x++) {
+				acc = 0;
+				for(i = 0; i < ilen; i++) {
+					acc += d1[i][y]*d2[i][x];
+				}
+				ret[y][x] = acc;
+			}
+		}
+		return ret;
+	}
 
 	public static double[][] moorepenroseInverseMatrix(double [][] g) {
 		int r, m = g.length-1, n = g[0].length-1;
@@ -73,8 +103,9 @@ public class Matrix {
 	 * @param coor [y,x] coordinates
 	 */
 	private static void copyTo(double[][] from, double[][] to, int[] coor) {
-		for(int y = coor[0]; y < coor[0]+from.length; y++) {
-			for(int x = coor[1]; x < coor[1]+from[0].length; x++) {
+		int fylen = from.length+coor[0], fxlen = from[0].length+coor[1];
+		for(int y = coor[0]; y < fylen; y++) {
+			for(int x = coor[1]; x < fxlen; x++) {
 				to[y][x] = from[y-coor[0]][x-coor[1]];
 			}
 		}
@@ -88,8 +119,10 @@ public class Matrix {
 	 */
 	private static double min(double[][] a, int m) {
 		double min = -1;
-		for(int y = 0; y < a.length; y++) {
-			for(int x = 0; x < a[0].length; x++) {
+		
+		int ylen = a.length, xlen=a[0].length;
+		for(int y = 0; y < ylen; y++) {
+			for(int x = 0; x < xlen; x++) {
 				if(a[y][x]>min && a[y][x]>m)
 					min = a[y][x];
 			}
@@ -105,8 +138,9 @@ public class Matrix {
 	 */
 	public static double[][] subtract(double[][] a, double[][] b) {
 		double [][] ret = new double[a.length][a[0].length];
-		for(int y = 0; y < a.length; y++) {
-			for(int x = 0; x < a[0].length; x++) {
+		int ylen = a.length, xlen = a[0].length;
+		for(int y = 0; y < ylen; y++) {
+			for(int x = 0; x < xlen; x++) {
 				ret[y][x] = a[y][x] - b[y][x];
 			}
 		}
@@ -124,8 +158,9 @@ public class Matrix {
 		boolean ydirection = ds[1]>=ds[0];
 		boolean xdirection = ds[3]>=ds[2];
 		//System.out.println(ds[0] + " " +ds[1] + " "+ds[2] + " "+ds[3] + " ");
-		for(int y = 0; y < ret.length; y++) {
-			for(int x = 0; x< ret[0].length;x++) {
+		int ylen = ret.length, xlen = ret[0].length;
+		for(int y = 0; y < ylen; y++) {
+			for(int x = 0; x< xlen;x++) {
 				ret[y][x] = m[ydirection? ds[0]+y : ds[0]-y][xdirection? ds[2]+x : ds[2]-x];
 			}
 		}
@@ -138,8 +173,9 @@ public class Matrix {
 	 * @return
 	 */
 	public static double[][] diagonal(double[][] a) {
-		double[][] diag = new double[1][a.length];
-		for(int i = 0; i < a.length; i++) {
+		int ilen = a.length;
+		double[][] diag = new double[1][ilen];
+		for(int i = 0; i < ilen; i++) {
 			diag[0][i] = a[i][i];
 		}
 		return diag;
@@ -152,8 +188,9 @@ public class Matrix {
 	 */
 	public static double[][] transpose(double[][] b) {
 		double[][] ret = new double[b[0].length][b.length];
-		for(int y = 0; y < b.length; y++)
-			for(int x = 0; x < b[0].length; x++)
+		int ylen= b.length, xlen=b[0].length;
+		for(int y = 0; y < ylen; y++)
+			for(int x = 0; x < xlen; x++)
 				ret[x][y] = b[y][x];
 		return ret;
 	}
@@ -193,8 +230,9 @@ public class Matrix {
 		double [][] a = new double[cluster.get(0).length][cluster.size()];
 		double [][] b = new double[cluster.size()][cluster.get(0).length];
 
-		for(int y = 0; y < a.length;y++) {
-			for(int x = 0; x < a[0].length;x++) {
+		int ylen = a.length, xlen=a[0].length;
+		for(int y = 0; y < ylen ;y++) {
+			for(int x = 0; x < xlen ;x++) {
 				a[y][x] = cluster.get(x)[y];
 				b[x][y] = cluster.get(x)[y];
 			}
@@ -222,11 +260,15 @@ public class Matrix {
 	public static double[][] multiply(double[][] a, double[][] b) {
 		double [][] result = new double [a.length][b[0].length];
 		//System.out.println("mult: " + a.length + " " + a[0].length + " " + b.length + " " + b[0].length + " ");
-		for(int y = 0; y < result.length; y++){
-			for(int x = 0; x < result[0].length; x++){
-				for(int k = 0; k < a[0].length; k++){
-					result[y][x] += a[y][k]*b[k][x];
+		int ylen = result.length, xlen = result[0].length, klen = a[0].length;
+		double acc;
+		for(int y = 0; y < ylen; y++){
+			for(int x = 0; x < xlen; x++){
+				acc = 0;
+				for(int k = 0; k < klen; k++){
+					acc += a[y][k]*b[k][x];
 				}
+				result[y][x] = acc;
 			}
 		}
 		return result;
@@ -322,7 +364,7 @@ public class Matrix {
 			}
 		}
 	}
-	
+
 	//TODO delete below ------------------
 	public static void printMatrix(double[][]m) {
 		for(int y = 0; y < m.length; y++) {
