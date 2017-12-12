@@ -123,21 +123,24 @@ public class Tree{
 	//	return 1/(1 - Math.pow(Math.E,-   dimensions.get(dimension).calculate(d)   ));
 	}
 
+	static long t_ax, t_c = 0, t_d = 0, t_i=0;
 	public String predict(double [] d) {
+		t_ax = System.currentTimeMillis();
 		//Calcula o valor em cada dimensao
 		double [] result = new double [dimensions.size()];
 		for(int i = 0; i < result.length; i++) {
 			result[i] = calculate(i,d);
 		}
+		t_c += System.currentTimeMillis()-t_ax;
+
 		
+		t_ax = System.currentTimeMillis();
 		double [] distancias = new double[classes.size()];
 		for(int i = 0; i < distancias.length; i++) {
-			//System.out.print("\""+classes.get(i)+"\", ");
 			distancias[i] = Arrays.mahalanobisDistance(result, 
 					mu.get(i), covarianceMatrix.get(i));
-			//System.out.print(distancias[i]+", ");
 		}
-		//System.out.println();
+		t_d += System.currentTimeMillis()-t_ax;
 		
 		double minDist = distancias[0];
 		String prediction = classes.get(0);
@@ -147,10 +150,11 @@ public class Tree{
 				prediction = classes.get(i);
 			}
 		}
-		//System.out.println(prediction);
-		
+
+		t_i ++;
+		if( t_i % 100000 == 0) System.out.println("calc: " + t_c + "  dist: " + t_d);
+		// 29.700s na distancia gen35 
 		return prediction;
-		//TODO fazer e verificar
 	}
 	
 	public double getTrainAccuracy(double [][] data, String [] target, double trainFract){

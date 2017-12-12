@@ -30,8 +30,8 @@ public class ClientWekaSim {
 	private static double tournamentFraction = 0.01;
 	private static double elitismFraction = 0.002 ;
 
-	private static int numberOfGenerations = 20;
-	private static int numberOfRuns = 10;
+	private static int numberOfGenerations = 100;
+	private static int numberOfRuns = 2;
 	private static int populationSize = 500;
 	private static int maxDepth = 6;
 

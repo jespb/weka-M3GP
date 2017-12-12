@@ -64,7 +64,7 @@ public class Node implements Serializable{
 	 */
 	public double calculate(double [] vals){
 		if(isLeaf()){
-			if (v % 1 != 0)
+			if (v != (int)v)
 				return v;
 			else
 				return vals[(int)v];
