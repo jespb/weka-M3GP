@@ -1,5 +1,9 @@
 package weka.classifiers.trees.m3gp.tree;
 
+import weka.classifiers.trees.m3gp.util.Point;
+
+import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import weka.classifiers.trees.m3gp.node.Node;
@@ -11,11 +15,18 @@ import weka.classifiers.trees.m3gp.util.Matrix;
  * @author João Batista, jbatista@di.fc.ul.pt
  *
  */
-public class Tree{
+public class Tree implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public static int trainSize;
-	
+
 	private ArrayList<Node> dimensions;
-	
+	private ArrayList<Point> train = new ArrayList<Point>();
+	private ArrayList<Point> test = new ArrayList<Point>();
+
 	private ArrayList<double[][]> covarianceMatrix = null;
 	private ArrayList<double[]> mu = null;
 	private ArrayList<String> classes;
@@ -42,12 +53,12 @@ public class Tree{
 	 */
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
-		sb.append("[");
-		sb.append("\"Dimension\":\""+dimensions.get(0)+"\"");
-		for(int i = 1; i< dimensions.size(); i++) {
-			sb.append(",\n\"Dimension\":\""+dimensions.get(i)+"\"");
+		sb.append("            \"Dimensions\":[\n");
+		for(int i = 0; i< dimensions.size()-1; i++) {
+			sb.append("                \""+dimensions.get(i)+"\",\n");
 		}
-		sb.append("]");
+		sb.append("                \""+dimensions.get(dimensions.size()-1)+"\"\n");
+		sb.append("            ]");
 		return sb.toString();
 	}
 
@@ -62,7 +73,7 @@ public class Tree{
 	private void makeCluster(double [][] data, String [] target, double trainFract) {
 		classes = new ArrayList<String>();
 		ArrayList<ArrayList<double []>> clusters = new ArrayList<ArrayList<double[]>>();
-		
+
 		//Descobre o numero de classes e cria um numero de clusters igual ao numero de classes
 		for(int i = 0; i < (int)(target.length * trainFract); i++) {
 			if(!classes.contains(target[i])) {
@@ -70,7 +81,7 @@ public class Tree{
 				clusters.add(new ArrayList<double[]>());
 			}
 		}
-		
+
 		//Adiciona os pontos ao cluster
 		for(int i = 0, index = -1; i < (int)(data.length * trainFract);i++) {
 			index = classes.indexOf(target[i]);
@@ -78,9 +89,10 @@ public class Tree{
 			for(int j = 0; j < dimensions.size(); j++) {
 				d[j] = calculate(j,data[i]);
 			}
+			train.add(new Point(d,target[i]));
 			clusters.get(index).add(d);
 		}
-		
+
 		covarianceMatrix = new ArrayList<double[][]>();
 		for(int i = 0; i<clusters.size(); i++) {
 			covarianceMatrix.add(Matrix.covarianceMatrix(clusters.get(i)));
@@ -95,7 +107,7 @@ public class Tree{
 			}
 			System.out.println();
 		}*/
-		
+
 		// Calculo de mu
 		mu = new ArrayList<double[]>();
 		for(int i = 0; i < clusters.size();i++){
@@ -114,13 +126,13 @@ public class Tree{
 		for(int i = 0; i < mu.get(0).length; i++)
 			System.out.print(mu.get(0)[i]+", ");
 		System.out.println(); 
-		*/
+		 */
 		//TODO verificar
 	}
-	
+
 	private double calculate(int dimension, double [] d) {
 		return dimensions.get(dimension).calculate(d);
-	//	return 1/(1 - Math.pow(Math.E,-   dimensions.get(dimension).calculate(d)   ));
+		//	return 1/(1 - Math.pow(Math.E,-   dimensions.get(dimension).calculate(d)   ));
 	}
 
 	static long t_ax, t_c = 0, t_d = 0, t_i=0;
@@ -133,7 +145,7 @@ public class Tree{
 		}
 		t_c += System.currentTimeMillis()-t_ax;
 
-		
+
 		t_ax = System.currentTimeMillis();
 		double [] distancias = new double[classes.size()];
 		for(int i = 0; i < distancias.length; i++) {
@@ -141,7 +153,7 @@ public class Tree{
 					mu.get(i), covarianceMatrix.get(i));
 		}
 		t_d += System.currentTimeMillis()-t_ax;
-		
+
 		double minDist = distancias[0];
 		String prediction = classes.get(0);
 		for(int i = 0; i < distancias.length; i++) {
@@ -156,10 +168,12 @@ public class Tree{
 		// 29.700s na distancia gen35 
 		return prediction;
 	}
-	
+
 	public double getTrainAccuracy(double [][] data, String [] target, double trainFract){
-		if (covarianceMatrix == null) 
+		if (covarianceMatrix == null) {
 			makeCluster(data, target, trainFract);
+		}
+
 		double hits = 0;
 		for(int i = 0; i < (int)(data.length*trainFract); i++) {
 			if(predict(data[i]).equals(target[i]))
@@ -167,10 +181,11 @@ public class Tree{
 		}
 		return hits/(int)(data.length*trainFract);
 	}
-	
+
 	public double getTestAccuracy(double [][] data, String [] target, double trainFract){
-		if (covarianceMatrix == null) 
+		if (covarianceMatrix == null) {
 			makeCluster(data, target, trainFract);
+		}
 		double hits = 0;
 		for(int i = (int)(data.length*trainFract); i < data.length; i++) {
 			if(predict(data[i]).equals(target[i]))
@@ -178,11 +193,11 @@ public class Tree{
 		}
 		return hits/(target.length - (int)(data.length*trainFract));
 	}
-	
+
 	public ArrayList<Node> getDimensions() {
 		return dimensions;
 	}
-	
+
 	public int getDepth() {
 		int depth = dimensions.get(0).getDepth();
 		for(int i = 1; i < dimensions.size(); i++) {
@@ -190,12 +205,47 @@ public class Tree{
 		}
 		return depth;
 	}
-	
+
 	public ArrayList<Node> cloneDimensions(){
 		ArrayList<Node> ret = new ArrayList<Node>();
 		for(int i = 0; i < dimensions.size(); i++) {
 			ret.add(dimensions.get(i).clone());
 		}
 		return ret;
+	}
+
+	public String toJSON(double[][] data, String[] target, double trainFraction) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(toString()+",\n");
+
+		//pontos treino
+		sb.append("            \"Train\":[\n");
+		for(int i = 0; i < data.length*trainFraction; i++) {
+			sb.append("                [");
+			for(int dim = 0; dim < dimensions.size(); dim++) {
+				sb.append( "\"" + dimensions.get(dim).calculate(data[i]) +"\"," );
+			}
+			sb.append( "\"" + predict(data[i]) +"\",\"" + target[i]+"\"]");
+			if (i < data.length*trainFraction-1)
+				sb.append(",");
+			sb.append("\n");
+		}
+		sb.append("            ],\n");
+
+		//pontos teste
+		sb.append("            \"Test\":[\n");
+		for(int i = (int)(data.length*trainFraction); i < data.length; i++) {
+			sb.append("                [");
+			for(int dim = 0; dim < dimensions.size(); dim++) {
+				sb.append( "\"" + dimensions.get(dim).calculate(data[i]) +"\"," );
+			}
+			sb.append( "\"" + predict(data[i]) +"\",\"" + target[i]+"\"]");
+			if (i < data.length-1)
+				sb.append(",");
+			sb.append("\n");
+		}
+		sb.append("            ]");
+
+		return sb.toString(); //TODO
 	}
 }

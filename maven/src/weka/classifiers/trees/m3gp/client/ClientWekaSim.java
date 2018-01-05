@@ -27,11 +27,11 @@ public class ClientWekaSim {
 	private static String [] terminals = null;
 
 	private static double trainFraction = 0.70;
-	private static double tournamentFraction = 0.01;
-	private static double elitismFraction = 0.002 ;
+	private static double tournamentFraction = 0.1;
+	private static double elitismFraction = 0.02 ;
 
-	private static int numberOfGenerations = 100;
-	private static int numberOfRuns = 2;
+	private static int numberOfGenerations = 30;
+	private static int numberOfRuns = 1;
 	private static int populationSize = 500;
 	private static int maxDepth = 6;
 
@@ -40,19 +40,21 @@ public class ClientWekaSim {
 	private static double [][] data = null;
 	private static String [] target = null;
 	
-	private static String resultOutputFilename = "results("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
-	private static String dimensionsOutputFilename = "dimensions("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
-	private static String sizeOutputFilename = "size("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
-	private static String fitnessOutputFilename = "fitness("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
+	public static BufferedWriter datafile;
+	
+	//private static String resultOutputFilename = "results("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
+	//private static String dimensionsOutputFilename = "dimensions("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
+	//private static String sizeOutputFilename = "size("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
+	//private static String fitnessOutputFilename = "fitness("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
 
 
 	// Variables
 	@SuppressWarnings("unchecked")
 	public static ArrayList<Double>[][] results = new ArrayList[numberOfGenerations][4];// treino, teste, dimensoes, tamanho
-	public static ArrayList<Double>[] al_dim = new ArrayList[numberOfGenerations];// dimensoes
-	public static ArrayList<Double>[] al_size = new ArrayList[numberOfGenerations];// tamanho
-	public static ArrayList<Double>[] al_fit_tr = new ArrayList[numberOfGenerations];// fitness treino
-	public static ArrayList<Double>[] al_fit_te = new ArrayList[numberOfGenerations];// fitness teste
+	//public static ArrayList<Double>[] al_dim = new ArrayList[numberOfGenerations];// dimensoes
+	//public static ArrayList<Double>[] al_size = new ArrayList[numberOfGenerations];// tamanho
+	//public static ArrayList<Double>[] al_fit_tr = new ArrayList[numberOfGenerations];// fitness treino
+	//public static ArrayList<Double>[] al_fit_te = new ArrayList[numberOfGenerations];// fitness teste
 	private static Population f = null;
 
 	/**
@@ -65,10 +67,10 @@ public class ClientWekaSim {
 			for ( int x = 0; x < results[0].length; x++) {
 				results [y][x] = new ArrayList<Double>();
 			}
-			al_dim[y] = new ArrayList<Double>();
-			al_size[y] = new ArrayList<Double>();
-			al_fit_tr[y] = new ArrayList<Double>();
-			al_fit_te[y] = new ArrayList<Double>();
+		//	al_dim[y] = new ArrayList<Double>();
+		//	al_size[y] = new ArrayList<Double>();
+		//	al_fit_tr[y] = new ArrayList<Double>();
+		//	al_fit_te[y] = new ArrayList<Double>();
 		}
 		
 		treatArgs(args);
@@ -80,7 +82,7 @@ public class ClientWekaSim {
 		}
 		System.out.println((System.currentTimeMillis() - time) + "ms");
 
-
+/*
 		BufferedWriter out = new BufferedWriter(new FileWriter(resultOutputFilename));
 		out.write("Treino;Teste;n_dimensoes;n_size\n");
 		double treino,teste,n_dim, n_nodes;
@@ -131,7 +133,7 @@ public class ClientWekaSim {
 			}
 			out.write("\n");
 		}
-		out.close();
+		out.close();*/
 	}
 
 	/**
@@ -151,6 +153,8 @@ public class ClientWekaSim {
 	 */
 	private static void run(int run) throws IOException{
 		System.out.println("Run " + run + ":");
+		datafile = new BufferedWriter(new FileWriter("Run_"+run+"_"+filename.split("[.]")[0]+".json"));
+		datafile.write("{\n    \"generations\": [{\n");
 
 		if(shuffleDataset)Arrays.shuffle(data, target);
 
@@ -171,6 +175,9 @@ public class ClientWekaSim {
 		f.train();
 		
 		System.out.println(f);
+		
+		datafile.write("    }]\n}");
+		datafile.close();
 	}
 
 	/**

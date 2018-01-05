@@ -70,8 +70,7 @@ public class Node implements Serializable{
 				return vals[(int)v];
 		}else{
 			double d = 0;
-			int v2 = (int)v;
-			switch(v2){
+			switch((int)v){
 			case 0://   +
 				d = l.calculate(vals)+r.calculate(vals);
 				break;

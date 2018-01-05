@@ -20,7 +20,7 @@ public class Population{
 	private boolean messages = true;
 
 	// current and max generation
-	private int generation = 0;
+	public static int generation = 0;
 	private int maxGeneration = 10;
 
 	// population
@@ -111,18 +111,21 @@ public class Population{
 
 		generation = 0;
 		while(improving()){
+			ClientWekaSim.datafile.write("        \"Individuals\":{\n");
+			
 			if(generation%5 == 0)
 				message("Generation " + generation + "...");
-			double [] result = nextGeneration(generation);
+			double [] result = nextGeneration();
 			ClientWekaSim.results[generation][0].add(result[0]);
 			ClientWekaSim.results[generation][1].add(result[1]);
 			ClientWekaSim.results[generation][2].add(result[2]);
 			ClientWekaSim.results[generation][3].add(result[3]);
-			ClientWekaSim.al_dim[generation].add(result[2]);
-			ClientWekaSim.al_size[generation].add(result[3]);
-			ClientWekaSim.al_fit_tr[generation].add(result[0]);
-			ClientWekaSim.al_fit_te[generation].add(result[1]);
+
 			generation ++;
+			if(improving())
+				ClientWekaSim.datafile.write(",");
+			
+			ClientWekaSim.datafile.write("        }\n");
 		}
 		return null;
 	}
@@ -138,7 +141,7 @@ public class Population{
 	/**
 	 * Evolves the classifier by one generation
 	 */
-	public double[] nextGeneration(int generation) throws IOException{
+	public double[] nextGeneration() throws IOException{
 		double [] results = new double[4];
 		if (done) {
 			results[0] = bestTree.getTrainAccuracy(data, target, trainFraction);
@@ -162,12 +165,17 @@ public class Population{
 
 		Arrays.mergeSortBy(population, fitnesses);
 		
+		long timeFile = System.currentTimeMillis();
+		ClientWekaSim.datafile.write(population[population.length-1].toJSON(data, target, trainFraction)+"\n");
+		timeFile = System.currentTimeMillis()-timeFile;
+		//ClientWekaSim.datafile.addGen(nextGen);
+		
 		//Pruning 			//TODO fix
 		long timePruning = System.currentTimeMillis();
 		double d1, d2;
 		//d1 = population[population.length-1].getTrainAccuracy(data, target,trainFraction);
 		//System.out.println("    "+d1 +" "+ population[population.length-1].size());
-		nextGen[0] = TreePruningHandler.prun(population[population.length-1],data,target,trainFraction);
+		//nextGen[0] = TreePruningHandler.prun(population[population.length-1],data,target,trainFraction);
 		//d2 = nextGen[0].getTrainAccuracy(data, target,trainFraction);
 		//System.out.println("    "+d2 + " " + nextGen[0].size());
 		//if(d2<d1)System.out.println("RRREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
@@ -175,7 +183,7 @@ public class Population{
 		timePruning = System.currentTimeMillis()-timePruning;
 		
 		// Elitismo 
-		for(int i = 1; i < elitismSize; i++ ){
+		for(int i = 0; i < elitismSize; i++ ){
 			nextGen[i] = population[population.length-1-i];
 		}
 		
@@ -212,14 +220,14 @@ public class Population{
 			setBestToLast(population);
 		}
 			
-		bestTree = nextGen[0];
+		bestTree = population[population.length-1];
 		
 		results[0] = bestTree.getTrainAccuracy(data, target, trainFraction);
 		results[1] = bestTree.getTestAccuracy(data, target, trainFraction);
 		results[2] = bestTree.getDimensions().size();
 		results[3] = bestTree.getSize();
 		
-		System.out.println(generation + ": " + results[0] + " // " + results[1] + "///" + timeFitness + "//" + timePruning + "//" + timeSelectAndCross);
+		System.out.println(generation + ": " + results[0] + " // " + results[1] + "///" + timeFitness + "//" + timePruning + "//" + timeFile +"//" + timeSelectAndCross);
 		
 		population = nextGen;
 		
