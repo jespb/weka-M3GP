@@ -1,9 +1,6 @@
 package weka.classifiers.trees.m3gp.tree;
 
-import weka.classifiers.trees.m3gp.util.Point;
-
 import java.io.Serializable;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import weka.classifiers.trees.m3gp.node.Node;
@@ -20,12 +17,10 @@ public class Tree implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-
+	public static String[] operations;
 	public static int trainSize;
 
 	private ArrayList<Node> dimensions;
-	private ArrayList<Point> train = new ArrayList<Point>();
-	private ArrayList<Point> test = new ArrayList<Point>();
 
 	private ArrayList<double[][]> covarianceMatrix = null;
 	private ArrayList<double[]> mu = null;
@@ -42,6 +37,7 @@ public class Tree implements Serializable{
 	public Tree(String [] op, String [] term, double t_rate, int depth){
 		dimensions = new ArrayList<Node>();
 		dimensions.add(new Node(op, term, t_rate,depth));
+		operations = op;
 	}
 
 	public Tree(ArrayList<Node> dim) {
@@ -55,9 +51,9 @@ public class Tree implements Serializable{
 		StringBuilder sb = new StringBuilder();
 		sb.append("            \"Dimensions\":[\n");
 		for(int i = 0; i< dimensions.size()-1; i++) {
-			sb.append("                \""+dimensions.get(i)+"\",\n");
+			sb.append("                \""+dimensions.get(i).toString(operations)+"\",\n");
 		}
-		sb.append("                \""+dimensions.get(dimensions.size()-1)+"\"\n");
+		sb.append("                \""+dimensions.get(dimensions.size()-1).toString(operations)+"\"\n");
 		sb.append("            ]");
 		return sb.toString();
 	}
@@ -89,7 +85,6 @@ public class Tree implements Serializable{
 			for(int j = 0; j < dimensions.size(); j++) {
 				d[j] = calculate(j,data[i]);
 			}
-			train.add(new Point(d,target[i]));
 			clusters.get(index).add(d);
 		}
 
@@ -132,7 +127,6 @@ public class Tree implements Serializable{
 
 	private double calculate(int dimension, double [] d) {
 		return dimensions.get(dimension).calculate(d);
-		//	return 1/(1 - Math.pow(Math.E,-   dimensions.get(dimension).calculate(d)   ));
 	}
 
 	static long t_ax, t_c = 0, t_d = 0, t_i=0;

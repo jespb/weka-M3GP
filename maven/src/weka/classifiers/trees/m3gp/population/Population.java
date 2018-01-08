@@ -122,10 +122,10 @@ public class Population{
 			ClientWekaSim.results[generation][3].add(result[3]);
 
 			generation ++;
-			if(improving())
-				ClientWekaSim.datafile.write(",");
 			
 			ClientWekaSim.datafile.write("        }\n");
+			if(improving())
+				ClientWekaSim.datafile.write(",");
 		}
 		return null;
 	}

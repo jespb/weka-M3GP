@@ -23,15 +23,16 @@ public class ClientWekaSim {
 	private static String datasetFilename = "datasets\\" + filename;
 	private static String treeType = "Ramped";
 
-	private static String [] operations = "+ - * /".split(" ");
+	public static String [] operations = "+ - * /".split(" ");
 	private static String [] terminals = null;
 
 	private static double trainFraction = 0.70;
 	private static double tournamentFraction = 0.1;
 	private static double elitismFraction = 0.02 ;
 
-	private static int numberOfGenerations = 30;
-	private static int numberOfRuns = 1;
+	private static int numberOfGenerations = 100;
+	private static int initialRun_ID = 0;
+	private static int numberOfRuns = 10;
 	private static int populationSize = 500;
 	private static int maxDepth = 6;
 
@@ -42,19 +43,10 @@ public class ClientWekaSim {
 	
 	public static BufferedWriter datafile;
 	
-	//private static String resultOutputFilename = "results("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
-	//private static String dimensionsOutputFilename = "dimensions("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
-	//private static String sizeOutputFilename = "size("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
-	//private static String fitnessOutputFilename = "fitness("+filename.split(".csv")[0]+"_r"+numberOfRuns+"_ps"+populationSize+"_gen"+numberOfGenerations+").csv";
-
 
 	// Variables
 	@SuppressWarnings("unchecked")
 	public static ArrayList<Double>[][] results = new ArrayList[numberOfGenerations][4];// treino, teste, dimensoes, tamanho
-	//public static ArrayList<Double>[] al_dim = new ArrayList[numberOfGenerations];// dimensoes
-	//public static ArrayList<Double>[] al_size = new ArrayList[numberOfGenerations];// tamanho
-	//public static ArrayList<Double>[] al_fit_tr = new ArrayList[numberOfGenerations];// fitness treino
-	//public static ArrayList<Double>[] al_fit_te = new ArrayList[numberOfGenerations];// fitness teste
 	private static Population f = null;
 
 	/**
@@ -67,10 +59,6 @@ public class ClientWekaSim {
 			for ( int x = 0; x < results[0].length; x++) {
 				results [y][x] = new ArrayList<Double>();
 			}
-		//	al_dim[y] = new ArrayList<Double>();
-		//	al_size[y] = new ArrayList<Double>();
-		//	al_fit_tr[y] = new ArrayList<Double>();
-		//	al_fit_te[y] = new ArrayList<Double>();
 		}
 		
 		treatArgs(args);
@@ -81,59 +69,6 @@ public class ClientWekaSim {
 			run(run);
 		}
 		System.out.println((System.currentTimeMillis() - time) + "ms");
-
-/*
-		BufferedWriter out = new BufferedWriter(new FileWriter(resultOutputFilename));
-		out.write("Treino;Teste;n_dimensoes;n_size\n");
-		double treino,teste,n_dim, n_nodes;
-		for(int i = 0; i < results.length; i++){
-			treino = Mat.median(results[i][0]);
-			teste = Mat.median(results[i][1]);
-			n_dim = Mat.median(results[i][2]);
-			n_nodes = Mat.median(results[i][3]);
-			out.write(treino + ";" + teste +";" + n_dim +";" + n_nodes + "\n");
-		}
-		out.close();
-		
-		out = new BufferedWriter(new FileWriter(fitnessOutputFilename));
-		for( int i = 0; i < numberOfRuns; i++) {
-			out.write("Run " + i + " : treino ;Run " + i + " : teste;");
-		}
-		out.write("\n");
-		for (int y = 0; y < al_fit_tr.length; y++) {
-			for(int x = 0; x < al_fit_tr[y].size(); x++) {
-				out.write(al_fit_tr[y].get(x)+";"+al_fit_te[y].get(x)+";");
-			}
-			out.write("\n");
-		}
-		out.close();
-		
-		out = new BufferedWriter(new FileWriter(dimensionsOutputFilename));
-		for( int i = 0; i < numberOfRuns; i++) {
-			out.write("Run " + i + ";");
-		}
-		out.write("\n");
-		for (int y = 0; y < al_dim.length; y++) {
-			for(int x = 0; x < al_dim[y].size(); x++) {
-				out.write(al_dim[y].get(x)+";");
-			}
-			out.write("\n");
-		}
-		out.close();
-		
-		
-		out = new BufferedWriter(new FileWriter(sizeOutputFilename));
-		for( int i = 0; i < numberOfRuns; i++) {
-			out.write("Run " + i + ";");
-		}
-		out.write("\n");
-		for (int y = 0; y < al_size.length; y++) {
-			for(int x = 0; x < al_size[y].size(); x++) {
-				out.write(al_size[y].get(x)+";");
-			}
-			out.write("\n");
-		}
-		out.close();*/
 	}
 
 	/**
@@ -153,7 +88,7 @@ public class ClientWekaSim {
 	 */
 	private static void run(int run) throws IOException{
 		System.out.println("Run " + run + ":");
-		datafile = new BufferedWriter(new FileWriter("Run_"+run+"_"+filename.split("[.]")[0]+".json"));
+		datafile = new BufferedWriter(new FileWriter("Run_"+(run+initialRun_ID)+"_"+filename.split("[.]")[0]+".json"));
 		datafile.write("{\n    \"generations\": [{\n");
 
 		if(shuffleDataset)Arrays.shuffle(data, target);

@@ -1,6 +1,8 @@
 package weka.classifiers.trees.m3gp.node;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Stack;
 
 import weka.classifiers.trees.m3gp.util.Mat;
 
@@ -14,11 +16,10 @@ public class Node implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private static final String[] operations = "+ - * /".split(" ");
 	double v;
 	Node l;
 	Node r;
-	
+
 	/**
 	 * Basic constructor
 	 * @param value
@@ -58,31 +59,73 @@ public class Node implements Serializable{
 	}
 
 	/**
-	 * Used the node to calculate
+	 * Used the node to calculate (DO NOT USE, IT'S WAY SLOWER)
 	 * @param vals
 	 * @return
 	 */
-	public double calculate(double [] vals){
-		if(isLeaf()){
+	public double calculate_stack(double [] vals){
+		double value = 0;
+		if(isLeaf()) {
 			if (v != (int)v)
+				value = v;
+			else
+				value = vals[(int)v];
+		}else {
+			Node curr = this;
+			Stack<Node> stack = new Stack<Node>();
+			while(!curr.isLeaf()) {
+				stack.push(curr);
+				curr = curr.l;
+			}
+			value = curr.calculate_stack(vals);
+			while(! stack.isEmpty()) {
+				curr = stack.pop();
+				switch((int)curr.v){
+				case 0://   +
+					value += curr.r.calculate_stack(vals);
+					break;
+				case 1://   -
+					value -= curr.r.calculate_stack(vals);
+					break;
+				case 2://   *
+					value *= curr.r.calculate_stack(vals);
+					break;
+				case 3://   //(protected division)
+					double div = curr.r.calculate_stack(vals);
+					if(div != 0)
+						value /= div;
+					break;
+				}
+			}
+		}
+		return value;
+	}
+	
+	public double calculate(double [] vals) {
+		if(isLeaf()){
+			int vi = (int)v;
+			return v != vi ? v : vals[vi];
+			/*
+			if (v != vi)
 				return v;
 			else
-				return vals[(int)v];
+				return vals[vi];*/
 		}else{
-			double d = 0;
+			double d = l.calculate(vals);
 			switch((int)v){
 			case 0://   +
-				d = l.calculate(vals)+r.calculate(vals);
+				d += r.calculate(vals);
 				break;
 			case 1://   -
-				d = l.calculate(vals)-r.calculate(vals);
+				d -= r.calculate(vals);
 				break;
 			case 2://   *
-				d = l.calculate(vals)*r.calculate(vals);
+				d *= r.calculate(vals);
 				break;
 			case 3://   //(protected division)
 				double div = r.calculate(vals);
-				d = l.calculate(vals)/(div != 0 ? div : 1);
+				if(div != 0)
+					d /= div;
 				break;
 			}
 			return d;
@@ -110,21 +153,21 @@ public class Node implements Serializable{
 			return new Node(l.clone(), r.clone(), v);
 		}
 	}
-	
+
 	/**
 	 * Returns the node under the String format
 	 */
-	public String toString(){
+	public String toString(String [] operations){
 		if(isLeaf()){
 			if (v<1)
 				return v+"";
 			else
 				return "x"+(int)v;
 		}else{
-			return "( " + l + " " + operations[(int)v] + " " + r + " )";
+			return "( " + l.toString(operations) + " " + operations[(int)v] + " " + r.toString(operations) + " )";
 		}
 	}
-	
+
 	/**
 	 * Returns true if the node is a leaf
 	 * It's assumed that the node either had two children or none
