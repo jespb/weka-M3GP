@@ -2,6 +2,7 @@ package weka.classifiers.trees.m3gp.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 /**
  * 
@@ -9,13 +10,14 @@ import java.util.Collections;
  *
  */
 public class Mat{
+	private static Random r = new Random();
 	/**
 	 * Returns a random int from 0 to n exclusive
 	 * @param n
 	 * @return
 	 */
 	public static int random(int n){
-		return (int)(Math.random()*n);
+		return r.nextInt(n);
 	}
 
 	/**
@@ -36,8 +38,17 @@ public class Mat{
 		}
 	}
 
+	/**
+	 * Return the median of a double arraylist
+	 * @param al
+	 * @return
+	 */
 	public static double median(ArrayList<Double> al) {
 		Collections.sort(al);
 		return al.get((int)(al.size()/2));
+	}
+
+	public static double sigmod(double d) {
+		return d/(1+Math.abs(d));
 	}
 }

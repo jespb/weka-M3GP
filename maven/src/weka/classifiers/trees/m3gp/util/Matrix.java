@@ -2,38 +2,7 @@ package weka.classifiers.trees.m3gp.util;
 
 import java.util.ArrayList;
 
-public class Matrix {
-	public static double[][] multiply3(double[][] m1, double[][]m2, double[][]m3){
-		double[][] ret= new double[m1.length][m3[0].length];
-		int x,y,z;
-		int ylen =ret.length, xlen=ret[0].length;
-		for(y = 0; y < ylen; y++) {
-			for(x = 0; x < xlen; x++) {
-				
-			}
-		}
-		return ret;
-	}
-	
-	public static double[][] multiplyTransposeOfBy(double [][] d1, double [][] d2){
-		double [][] ret = new double[d1[0].length][d2[0].length];
-		int xlen = ret[0].length;
-		int ylen = ret.length;
-		int ilen = d2.length;
-		int y,x,i;
-		double acc;
-		for(y = 0; y < ylen; y++) {
-			for(x = 0; x < xlen; x++) {
-				acc = 0;
-				for(i = 0; i < ilen; i++) {
-					acc += d1[i][y]*d2[i][x];
-				}
-				ret[y][x] = acc;
-			}
-		}
-		return ret;
-	}
-
+public class Matrix {	
 	public static double[][] moorepenroseInverseMatrix(double [][] g) {
 		int r, m = g.length-1, n = g[0].length-1;
 		double [][] a, diagA, l;
@@ -118,12 +87,12 @@ public class Matrix {
 	 * @return
 	 */
 	private static double min(double[][] a, int m) {
-		double min = -1;
+		double min = a[0][0];
 		
 		int ylen = a.length, xlen=a[0].length;
 		for(int y = 0; y < ylen; y++) {
 			for(int x = 0; x < xlen; x++) {
-				if(a[y][x]>min && a[y][x]>m)
+				if(a[y][x]<min && a[y][x]>m)
 					min = a[y][x];
 			}
 		}
@@ -155,6 +124,9 @@ public class Matrix {
 	 */
 	public static double[][] section(double[][] m, int[] ds) {
 		double [][] ret = new double[(int) (Math.abs(ds[0]-ds[1])+1)][(int) (Math.abs(ds[2]-ds[3])+1)];
+		
+		// Alt 1
+		/*
 		boolean ydirection = ds[1]>=ds[0];
 		boolean xdirection = ds[3]>=ds[2];
 		//System.out.println(ds[0] + " " +ds[1] + " "+ds[2] + " "+ds[3] + " ");
@@ -164,6 +136,42 @@ public class Matrix {
 				ret[y][x] = m[ydirection? ds[0]+y : ds[0]-y][xdirection? ds[2]+x : ds[2]-x];
 			}
 		}
+		*/
+		
+		// Alt 2
+		int direction = (ds[1]>=ds[0]?1:0) + (ds[3]>=ds[2]?2:0); 
+		int ylen = ret.length, xlen = ret[0].length;
+		switch (direction) {
+		case 0:
+			for(int y = 0; y < ylen; y++) {
+				for(int x = 0; x< xlen;x++) {
+					ret[y][x] = m[ds[0]-y][ds[2]-x];
+				}
+			}
+			break;
+		case 1:
+			for(int y = 0; y < ylen; y++) {
+				for(int x = 0; x< xlen;x++) {
+					ret[y][x] = m[ds[0]+y][ds[2]-x];
+				}
+			}
+			break;
+		case 2:
+			for(int y = 0; y < ylen; y++) {
+				for(int x = 0; x< xlen;x++) {
+					ret[y][x] = m[ds[0]-y][ds[2]+x];
+				}
+			}
+			break;
+		case 3:
+			for(int y = 0; y < ylen; y++) {
+				for(int x = 0; x< xlen;x++) {
+					ret[y][x] = m[ds[0]+y][ds[2]+x];
+				}
+			}
+			break;
+		}
+		
 		return ret;
 	}
 
@@ -202,8 +210,8 @@ public class Matrix {
 	 */
 	public static double[][] identity(int n){
 		double [][] m = new double[n][n];
-		for(int i = 0; i < n;i++)
-			m[i][i] = 1;
+		for(int y = 0; y < n;y++)
+			m[y][y] = 1;
 		return m;
 	}
 
@@ -240,10 +248,8 @@ public class Matrix {
 
 		double [][] covMat = multiply(a,b);
 
-
-
-		for(int y= 0; y < covMat.length; y++){
-			for(int x = 0; x < covMat.length; x++){
+		for(int y= 0; y < ylen; y++){
+			for(int x = 0; x < ylen; x++){
 				covMat[y][x] /= cluster.size();
 			}
 		}
@@ -261,7 +267,7 @@ public class Matrix {
 		double [][] result = new double [a.length][b[0].length];
 		//System.out.println("mult: " + a.length + " " + a[0].length + " " + b.length + " " + b[0].length + " ");
 		int ylen = result.length, xlen = result[0].length, klen = a[0].length;
-		double acc;
+		double acc = 0;
 		for(int y = 0; y < ylen; y++){
 			for(int x = 0; x < xlen; x++){
 				acc = 0;
@@ -273,36 +279,70 @@ public class Matrix {
 		}
 		return result;
 	}
+	
+	public static double[][]  inverseMatrix(double [][] m) {
+		int n = m.length;
 
-	public static double[][] inverseMatrix(double a[][]){
+		m = Matrix.clone(m);
+		double [][] inv = Matrix.identity(n);
+
+		double d;
+		
+		for(int i = 0; i < n; i++) {
+			for(int y = i+1; y< n; y++) {
+				d= -m[y][i] / m[i][i];
+				for(int k = 0; k < n; k++) {
+					inv[y][k] += inv[i][k]*d;
+					m[y][k] += m[i][k]*d;
+				}
+			}
+		}
+		
+		for(int i = 0; i < n; i++) {
+			d = 1/m[i][i];
+			inv[i] = Arrays.multiply(inv[i], d);
+			m[i] = Arrays.multiply(m[i], d);
+		}
+		
+		for(int y = 0; y < n; y++) {
+			for(int x = y+1; x< n; x++) {
+				d = -m[y][x];
+				for(int k = y>0?y-1:0; k < n; k++) {
+					inv[y][k] += inv[x][k]*d;
+					m[y][k] += m[x][k]*d;
+				}
+				
+			}
+		}
+		return inv;
+	}
+
+	public static double[][] inverseMatrix_old(double a[][]){
 		int n = a.length;
 		double x[][] = new double[n][n];
-		double b[][] = new double[n][n];
+		double b[][] = identity(n);
 		int index[] = new int[n];
-
-		for (int i=0; i<n; ++i) 
-			b[i][i] = 1;
 
 		// Transform the matrix into an upper triangle
 		gaussian(a, index);
-
+		
 		// Update the matrix b[i][j] with the ratios stored
-		for (int i=0; i<n-1; ++i)
-			for (int j=i+1; j<n; ++j)
-				for (int k=0; k<n; ++k)
+		for (int i=0; i<n-1; i++)
+			for (int j=i+1; j<n; j++)
+				for (int k=0; k<n; k++)
 					b[index[j]][k]
 							-= a[index[j]][i]*b[index[i]][k];
 
 		// Perform backward substitutions
-		for (int i=0; i<n; ++i){
+		for (int i=0; i<n; i++){
 			x[n-1][i] = b[index[n-1]][i]/a[index[n-1]][n-1];
 
-			for (int j=n-2; j>=0; --j){
+			for (int j=n-2; j>=0; j--){
 				x[j][i] = b[index[j]][i];
 
-				for (int k=j+1; k<n; ++k){
+				for (int k=j+1; k<n; k++)
 					x[j][i] -= a[index[j]][k]*x[k][i];
-				}
+				
 				x[j][i] /= a[index[j]][j];
 			}
 		}
@@ -316,30 +356,27 @@ public class Matrix {
 		double c[] = new double[n];
 
 		// Initialize the index
-		for (int i=0; i<n; ++i) 
+		for (int i=0; i<n; i++) 
 			index[i] = i;
 
 		// Find the rescaling factors, one from each row
-		for (int i=0; i<n; ++i){
+		for (int i=0; i<n; i++){
 			double c1 = 0;
 
-			for (int j=0; j<n; ++j){
-				double c0 = Math.abs(a[i][j]);
-				if (c0 > c1) c1 = c0;
-			}
+			for (int j=0; j<n; j++)
+				c1 = Math.max(Math.abs(a[i][j]),c1);
+			
 			c[i] = c1;
 		}
 
 		// Search the pivoting element from each column
 		int k = 0;
 
-		for (int j=0; j<n-1; ++j){
+		for (int j=0; j<n-1; j++){
 			double pi1 = 0;
 
-			for (int i=j; i<n; ++i){
-				double pi0 = Math.abs(a[index[i]][j]);
-
-				pi0 /= c[index[i]];
+			for (int i=j; i<n; i++){
+				double pi0 = Math.abs(a[index[i]][j]) / c[index[i]];
 
 				if (pi0 > pi1){
 					pi1 = pi0;
@@ -352,14 +389,14 @@ public class Matrix {
 			index[j] = index[k];
 			index[k] = itmp;
 
-			for (int i=j+1; i<n; ++i){
+			for (int i=j+1; i<n; i++){
 				double pj = a[index[i]][j]/a[index[j]][j];
 
 				// Record pivoting ratios below the diagonal
 				a[index[i]][j] = pj;
 
 				// Modify other elements accordingly
-				for (int l=j+1; l<n; ++l)
+				for (int l=j+1; l<n; l++)
 					a[index[i]][l] -= pj*a[index[j]][l];
 			}
 		}
@@ -377,11 +414,27 @@ public class Matrix {
 
 	public static double[][] clone(double[][] b) {
 		double [][] ret = new double[b.length][b[0].length];
-		for(int y = 0; y < b.length; y++) {
-			for(int x = 0; x < b[0].length; x++) {
+		for(int y = 0; y < b.length; y++) 
+			for(int x = 0; x < b[0].length; x++) 
 				ret[y][x]=b[y][x];
-			}
-		}
+			
+		
 		return ret;
+	}
+	
+	
+	public static double determinant(double [][] m) {
+		double det = 1;
+		int n = m.length;
+		m = Matrix.clone(m);
+		for(int y = 1; y < n; y++)
+			for(int y2 = y; y2< n; y2++) 
+				m[y2] = Arrays.sum(m[y2], m[y-1], -m[y2][y-1]/m[y-1][y-1]);
+		
+
+		for(int i = 0; i < n; i++) 
+			det *= m[i][i];
+		
+		return det;
 	}
 }

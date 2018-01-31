@@ -29,9 +29,10 @@ public class TreeMutationHandler {
 
 		ArrayList<Node> dim = original.cloneDimensions();
 
-		switch(Mat.random(dim.size()>1?3:2)) {
+		switch( Mat.random( (dim.size()>1?3:2) ) ) {
+		//switch( Mat.random(3) ) {
 		case 0:		//Mutacao normal
-			Node p1 = dim.get((int)(dim.size()*Math.random()));
+			Node p1 = dim.get( Mat.random(dim.size()) );
 			Node r1 = NodeHandler.randomNode(p1);
 			NodeHandler.redirect(r1, new Node(op,term,t_rate,max_depth));
 			break;
@@ -39,7 +40,8 @@ public class TreeMutationHandler {
 			dim.add(new Node(op,term,t_rate,max_depth));
 			break;
 		case 2: 	//Remove dimensao
-			dim.remove((int)(dim.size()*Math.random()));
+		//	if(dim.size()>1)
+				dim.remove( Mat.random(dim.size()) );
 			break;
 		}
 		return new Tree(dim);

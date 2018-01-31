@@ -3,12 +3,10 @@ package weka.classifiers.trees.m3gp.client;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import weka.classifiers.trees.m3gp.population.Population;
 import weka.classifiers.trees.m3gp.util.Arrays;
 import weka.classifiers.trees.m3gp.util.Data;
-import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
  * 
@@ -17,7 +15,7 @@ import weka.classifiers.trees.m3gp.util.Mat;
  */
 public class ClientWekaSim {
 
-	private static int file = 1; // ST, GS
+	private static int file = 3; // ST, GS
 
 	private static String filename = "brazil.csv heart.csv waveform.csv vowel.csv".split(" ")[file];
 	private static String datasetFilename = "datasets\\" + filename;
@@ -26,14 +24,16 @@ public class ClientWekaSim {
 	public static String [] operations = "+ - * /".split(" ");
 	private static String [] terminals = null;
 
+	private static int speed = 1;
+	
 	private static double trainFraction = 0.70;
-	private static double tournamentFraction = 0.1;
-	private static double elitismFraction = 0.02 ;
+	private static double tournamentFraction = 0.01 * speed;
+	private static double elitismFraction = 0.002 * speed ;
 
 	private static int numberOfGenerations = 100;
-	private static int initialRun_ID = 0;
+	private static int initialRun_ID = 20;
 	private static int numberOfRuns = 10;
-	private static int populationSize = 500;
+	private static int populationSize = 500 / speed;
 	private static int maxDepth = 6;
 
 	private static boolean shuffleDataset = true;
@@ -45,8 +45,6 @@ public class ClientWekaSim {
 	
 
 	// Variables
-	@SuppressWarnings("unchecked")
-	public static ArrayList<Double>[][] results = new ArrayList[numberOfGenerations][4];// treino, teste, dimensoes, tamanho
 	private static Population f = null;
 
 	/**
@@ -55,12 +53,6 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		for ( int y  = 0; y < results.length; y++) {
-			for ( int x = 0; x < results[0].length; x++) {
-				results [y][x] = new ArrayList<Double>();
-			}
-		}
-		
 		treatArgs(args);
 		init();
 

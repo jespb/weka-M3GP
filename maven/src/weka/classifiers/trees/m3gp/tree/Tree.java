@@ -61,7 +61,7 @@ public class Tree implements Serializable{
 	public int getSize() {
 		int size = 0;
 		for(int i = 0; i < dimensions.size(); i++) {
-			size += dimensions.size();
+			size += dimensions.get(i).getSize();
 		}
 		return size;
 	}
@@ -77,10 +77,11 @@ public class Tree implements Serializable{
 				clusters.add(new ArrayList<double[]>());
 			}
 		}
-
+		
 		//Adiciona os pontos ao cluster
 		for(int i = 0, index = -1; i < (int)(data.length * trainFract);i++) {
 			index = classes.indexOf(target[i]);
+			
 			double [] d = new double[dimensions.size()];
 			for(int j = 0; j < dimensions.size(); j++) {
 				d[j] = calculate(j,data[i]);
@@ -92,16 +93,6 @@ public class Tree implements Serializable{
 		for(int i = 0; i<clusters.size(); i++) {
 			covarianceMatrix.add(Matrix.covarianceMatrix(clusters.get(i)));
 		}
-		/*
-		for(int i = 0; i< covarianceMatrix.size();i++) {
-			for(int y = 0; y < covarianceMatrix.get(i).length;y++) {
-				for(int x = 0; x< covarianceMatrix.get(i)[y].length;x++) {
-					System.out.print(covarianceMatrix.get(i)[0][0]+", ");		
-				}
-				System.out.println();
-			}
-			System.out.println();
-		}*/
 
 		// Calculo de mu
 		mu = new ArrayList<double[]>();
@@ -116,13 +107,6 @@ public class Tree implements Serializable{
 				mu.get(i)[j] /= clusters.get(i).size();
 			}
 		}
-		/*
-		System.out.println(this);
-		for(int i = 0; i < mu.get(0).length; i++)
-			System.out.print(mu.get(0)[i]+", ");
-		System.out.println(); 
-		 */
-		//TODO verificar
 	}
 
 	private double calculate(int dimension, double [] d) {
@@ -163,31 +147,6 @@ public class Tree implements Serializable{
 		return prediction;
 	}
 
-	public double getTrainAccuracy(double [][] data, String [] target, double trainFract){
-		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFract);
-		}
-
-		double hits = 0;
-		for(int i = 0; i < (int)(data.length*trainFract); i++) {
-			if(predict(data[i]).equals(target[i]))
-				hits++;
-		}
-		return hits/(int)(data.length*trainFract);
-	}
-
-	public double getTestAccuracy(double [][] data, String [] target, double trainFract){
-		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFract);
-		}
-		double hits = 0;
-		for(int i = (int)(data.length*trainFract); i < data.length; i++) {
-			if(predict(data[i]).equals(target[i]))
-				hits++;
-		}
-		return hits/(target.length - (int)(data.length*trainFract));
-	}
-
 	public ArrayList<Node> getDimensions() {
 		return dimensions;
 	}
@@ -214,7 +173,7 @@ public class Tree implements Serializable{
 
 		//pontos treino
 		sb.append("            \"Train\":[\n");
-		for(int i = 0; i < data.length*trainFraction; i++) {
+		for(int i = 0; i < (int)(data.length*trainFraction); i++) {
 			sb.append("                [");
 			for(int dim = 0; dim < dimensions.size(); dim++) {
 				sb.append( "\"" + dimensions.get(dim).calculate(data[i]) +"\"," );
@@ -240,6 +199,91 @@ public class Tree implements Serializable{
 		}
 		sb.append("            ]");
 
-		return sb.toString(); //TODO
+		return sb.toString();
 	}
+	
+	// ------- ------- ------- FUNCOES DE FITNESS ------- ------- -------
+	public double getTrainAccuracy(double [][] data, String [] target, double trainFract){
+		if (covarianceMatrix == null) {
+			makeCluster(data, target, trainFract);
+		}
+
+		double hits = 0;
+		for(int i = 0; i < (int)(data.length*trainFract); i++) {
+			if(predict(data[i]).equals(target[i]))
+				hits++;
+		}
+		return hits/(int)(data.length*trainFract);
+	}
+
+	public double getTestAccuracy(double [][] data, String [] target, double trainFract){
+		if (covarianceMatrix == null) {
+			makeCluster(data, target, trainFract);
+		}
+		double hits = 0;
+		for(int i = (int)(data.length*trainFract); i < data.length; i++) {
+			if(predict(data[i]).equals(target[i]))
+				hits++;
+		}
+		return hits/(target.length - (int)(data.length*trainFract));
+	}
+
+	
+
+	public double getTrainMeanDistanceToCentroid(double [][] data, String[] target, double trainFract) {
+		if (covarianceMatrix == null) {
+			makeCluster(data, target, trainFract);
+		}
+				
+		double acc_distance = 0;
+		double set_size = (int)(data.length*trainFract);
+		for(int i = 0; i < set_size; i++) {
+			double [] coor = new double[dimensions.size()];
+			for(int d = 0;d < dimensions.size(); d++) {
+				coor[d] = dimensions.get(d).calculate(data[i]);
+			}
+			acc_distance += Arrays.euclideanDistance(coor, mu.get(classes.indexOf(target[i])));
+		}
+		return acc_distance/set_size;
+	}
+	
+	public double getTestMeanDistanceToCentroid(double [][] data, String[] target, double trainFract) {
+		if (covarianceMatrix == null) {
+			makeCluster(data, target, trainFract);
+		}
+		
+		double acc_distance = 0;
+		double set_size = data.length - (int)(data.length*trainFract);
+		for(int i = (int)(data.length*trainFract); i < data.length; i++) {
+			double [] coor = new double[dimensions.size()];
+			for(int d = 0;d < dimensions.size(); d++) {
+				coor[d] = dimensions.get(d).calculate(data[i]);
+			}
+			acc_distance += Arrays.euclideanDistance(coor, mu.get(classes.indexOf(target[i])));
+		}
+		return acc_distance/set_size;
+	}
+
+	public double getMeanDistanceBetweenCentroids(double [][] data, String[] target, double trainFract) {
+		if (covarianceMatrix == null) {
+			makeCluster(data, target, trainFract);
+		}
+		
+		double total_distance = 0;
+		for(int i = 0; i < mu.size(); i++) {
+			for(int j = i+1; j < mu.size(); j++) {
+				total_distance += Arrays.euclideanDistance(mu.get(i), mu.get(j));
+			}
+		}
+		total_distance /= mu.size()*(mu.size()-1)/2;
+		// TODO Auto-generated method stub
+		return total_distance;
+	}
+
+	public void clean() {
+		for(int i = 0; i < dimensions.size(); i++) {
+			dimensions.get(i).clean();
+		}
+	}
+	
 }

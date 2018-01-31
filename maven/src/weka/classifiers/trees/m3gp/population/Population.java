@@ -5,11 +5,7 @@ import java.util.ArrayList;
 
 import weka.classifiers.trees.m3gp.client.ClientWekaSim;
 import weka.classifiers.trees.m3gp.tree.Tree;
-import weka.classifiers.trees.m3gp.tree.TreeCrossoverHandler;
-import weka.classifiers.trees.m3gp.tree.TreeMutationHandler;
-import weka.classifiers.trees.m3gp.tree.TreePruningHandler;
 import weka.classifiers.trees.m3gp.util.Arrays;
-import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
  * 
@@ -40,7 +36,7 @@ public class Population{
 	private String [] terminals;
 	
 	//probability of a node being terminal while using grow to create a tree
-	private double terminalRateForGrow = 0.10;
+	private double terminalRateForGrow = 0.1;
 	
 	//initial max depth
 	private int maxDepth = 6;
@@ -86,21 +82,19 @@ public class Population{
 		case "Ramped":
 			for(int i = 0; i < populationSize; i++){
 				if( i < (int)(populationSize * 0.75))
-					population[i] = new Tree(op, term, 0 , Math.max(i%maxDepth,2));
+					population[i] = new Tree(op, term, 0 , (i% (maxDepth-1) ) +2 );
 				else
-					population[i] = new Tree(op, term, terminalRateForGrow , Math.max(i%maxDepth,2));
+					population[i] = new Tree(op, term, terminalRateForGrow , (i% (maxDepth-1) ) +2 );
 			}
 			break;
 		default: // full
 			for(int i = 0; i < populationSize; i++){
-				if( i < populationSize / 2)
-					population[i] = new Tree(op, term, 0 , maxDepth);
+				population[i] = new Tree(op, term, 0 , maxDepth);
 			}
 			break;
 		}
 		
-		Tree.trainSize = (int)(target.length * trainFraction);
-		
+		Tree.trainSize = (int)(target.length * trainFraction);		
 	}
 
 	/**
@@ -115,11 +109,7 @@ public class Population{
 			
 			if(generation%5 == 0)
 				message("Generation " + generation + "...");
-			double [] result = nextGeneration();
-			ClientWekaSim.results[generation][0].add(result[0]);
-			ClientWekaSim.results[generation][1].add(result[1]);
-			ClientWekaSim.results[generation][2].add(result[2]);
-			ClientWekaSim.results[generation][3].add(result[3]);
+			nextGeneration();
 
 			generation ++;
 			
@@ -137,20 +127,19 @@ public class Population{
 		return generation < maxGeneration;
 	}	
 
+	// train is perfect
 	boolean done = false;
 	/**
 	 * Evolves the classifier by one generation
 	 */
-	public double[] nextGeneration() throws IOException{
-		double [] results = new double[4];
+	public void nextGeneration() throws IOException{
 		if (done) {
-			results[0] = bestTree.getTrainAccuracy(data, target, trainFraction);
-			results[1] = bestTree.getTestAccuracy(data, target, trainFraction);
-			results[2] = bestTree.getDimensions().size();
-			results[3] = bestTree.getSize();
-			System.out.println(generation + ": " + results[0] + " // " + results[1] + "/// (done)");
-			return results;
 			
+			double train = bestTree.getTrainAccuracy(data, target, trainFraction);
+			double test = bestTree.getTestAccuracy(data, target, trainFraction);
+			System.out.println(generation + ": " + train + " // " + test + "/// (done)");
+			ClientWekaSim.datafile.write(bestTree.toJSON(data, target, trainFraction)+"\n");
+			return;
 		}
 
 		Tree [] nextGen = new Tree [population.length];
@@ -159,7 +148,7 @@ public class Population{
 		// Obtencao de fitness
 		long timeFitness = System.currentTimeMillis();
 		for (int i = 0; i < population.length; i++){
-			fitnesses[i] = population[i].getTrainAccuracy(data, target,trainFraction);
+			fitnesses[i] = PopulationFunctions.fitnessTrain(population[i],data, target,trainFraction);
 		}
 		timeFitness = System.currentTimeMillis()-timeFitness;
 
@@ -172,18 +161,11 @@ public class Population{
 		
 		//Pruning 			//TODO fix
 		long timePruning = System.currentTimeMillis();
-		double d1, d2;
-		//d1 = population[population.length-1].getTrainAccuracy(data, target,trainFraction);
-		//System.out.println("    "+d1 +" "+ population[population.length-1].size());
-		//nextGen[0] = TreePruningHandler.prun(population[population.length-1],data,target,trainFraction);
-		//d2 = nextGen[0].getTrainAccuracy(data, target,trainFraction);
-		//System.out.println("    "+d2 + " " + nextGen[0].size());
-		//if(d2<d1)System.out.println("RRREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-		//if(d2>d1)System.out.println("WWWWWWWWWWOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+		nextGen[0] = prun(population[population.length-1],data,target,trainFraction);
 		timePruning = System.currentTimeMillis()-timePruning;
 		
 		// Elitismo 
-		for(int i = 0; i < elitismSize; i++ ){
+		for(int i = 1; i < 1+elitismSize; i++ ){
 			nextGen[i] = population[population.length-1-i];
 		}
 		
@@ -192,14 +174,15 @@ public class Population{
 
 		long timeSelectAndCross = System.currentTimeMillis();
 		Tree[] cross;
-		for(int i = elitismSize; i < nextGen.length; i++){
+		for(int i = 1+elitismSize; i < nextGen.length; i++){
 			if(Math.random() < 0.50) {//TODO default = 0.50
 				cross = crossover(population);
 				if(cross[0].getDepth() <= 17) {
 					nextGen[i] = cross[0];	
 				}else {
 					i--;
-				}if(i+1 < nextGen.length) {
+				}
+				if(i+1 < nextGen.length) {
 					if(cross[1].getDepth()<=17) {
 						nextGen[i+1] = cross[1];
 					}else {
@@ -221,21 +204,18 @@ public class Population{
 		}
 			
 		bestTree = population[population.length-1];
+
+		double train = bestTree.getTrainAccuracy(data, target, trainFraction);
+		double test = bestTree.getTestAccuracy(data, target, trainFraction);
 		
-		results[0] = bestTree.getTrainAccuracy(data, target, trainFraction);
-		results[1] = bestTree.getTestAccuracy(data, target, trainFraction);
-		results[2] = bestTree.getDimensions().size();
-		results[3] = bestTree.getSize();
-		
-		System.out.println(generation + ": " + results[0] + " // " + results[1] + "///" + timeFitness + "//" + timePruning + "//" + timeFile +"//" + timeSelectAndCross);
+		System.out.println(generation + ": " + train + " // " + test + "///" + timeFitness + "//" + timePruning + "//" + timeFile +"//" + timeSelectAndCross);
 		
 		population = nextGen;
 		
-		if(results[0] == 1) {
+		if(train == 1) {
+			bestTree = prun(bestTree, data, target, trainFraction);
 			done = true;
 		}
-		
-		return results;
 	}
 
 	/**
@@ -308,4 +288,9 @@ public class Population{
 	private Tree mutation(Tree[] population) {
 		return PopulationFunctions.mutation(population, tournamentSize, operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
 	}
+	
+	private Tree prun(Tree tree, double[][] data, String[] target, double trainFraction) {
+		return PopulationFunctions.prun(tree,data,target,trainFraction);
+	}
+
 }

@@ -1,7 +1,6 @@
 package weka.classifiers.trees.m3gp.node;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Stack;
 
 import weka.classifiers.trees.m3gp.util.Mat;
@@ -48,7 +47,7 @@ public class Node implements Serializable{
 	 * @param depth
 	 */
 	public Node(String [] op, String [] term, double t_rate, int depth){
-		if(Math.random() < t_rate || depth <= 0){
+		if(Math.random() < t_rate || depth <= 1){
 			int index = Mat.random(term.length);
 			v = index < term.length-1? index :Math.random();
 		}else{
@@ -100,7 +99,7 @@ public class Node implements Serializable{
 		}
 		return value;
 	}
-	
+
 	public double calculate(double [] vals) {
 		if(isLeaf()){
 			int vi = (int)v;
@@ -183,6 +182,43 @@ public class Node implements Serializable{
 			return 1;
 		}else {
 			return 1 + Math.max(l.getDepth(), r.getDepth());
+		}
+	}
+
+	public void clean() {
+		if ( !isLeaf() ) {
+			// + - * //
+			if(v == 0 && l.isLeaf() && l.v == 0) {
+				v = r.v;
+				if(!r.isLeaf()) {
+				l = r.l;
+				r = r.r;
+				}
+			}
+			if( (v == 0 || v==1) && r.isLeaf() && r.v == 0) {
+				v = r.v;
+				if(!l.isLeaf()) {
+				l = l.l;
+				r = l.r;
+				}
+			}
+			if(v == 1 && l.isLeaf() && r.isLeaf() && r.v==l.v) {
+				l=null;
+				r=null;
+				v=0;
+			}
+			if(v == 2 && (r.isLeaf() && r.v == 0) || (l.isLeaf() && l.v == 0)  )  {
+				l = null;
+				r = null;
+				v = 0;
+			}
+			if(v == 3 && r.isLeaf() && r.v == 0) {
+				v = l.v;
+				if(!l.isLeaf()) {
+				r= l.r;
+				l = l.l;
+				}
+			}
 		}
 	}
 }

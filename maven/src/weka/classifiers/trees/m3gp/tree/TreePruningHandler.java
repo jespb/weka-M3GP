@@ -3,6 +3,7 @@ package weka.classifiers.trees.m3gp.tree;
 import java.util.ArrayList;
 
 import weka.classifiers.trees.m3gp.node.Node;
+import weka.classifiers.trees.m3gp.population.PopulationFunctions;
 
 public class TreePruningHandler {
 /*
@@ -12,15 +13,16 @@ public class TreePruningHandler {
 	public static Tree prun(Tree tree, double [][] data, String [] target, double trainFract){
 		Tree t = new Tree(tree.cloneDimensions()); 
 		Tree candidate = null;
-		for(int i = 0; t.getDimensions().size() >1 && i < t.getDimensions().size(); i++) {
+		for(int i = 0; t.getDimensions().size() > 1 && i < t.getDimensions().size(); i++) {
 			ArrayList<Node> newDim = t.cloneDimensions();
 			newDim.remove(i);
 			candidate = new Tree(newDim);
-			if(candidate.getTrainAccuracy(data, target,trainFract) > t.getTrainAccuracy(data, target,trainFract)) {
-				t = new Tree(candidate.cloneDimensions());
+			if(PopulationFunctions.betterTrain(candidate, t, data, target, trainFract)) {
+				t = candidate;
 				i--;
 			}
 		}
+		//t.clean();
 		return t;
 	}
-}//TODO ver porque reduz a precisao
+}

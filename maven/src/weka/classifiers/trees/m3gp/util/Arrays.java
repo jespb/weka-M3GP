@@ -1,6 +1,5 @@
 package weka.classifiers.trees.m3gp.util;
 
-import java.util.ArrayList;
 
 /**
  * 
@@ -8,6 +7,15 @@ import java.util.ArrayList;
  *
  */
 public class Arrays {
+	public static double euclideanDistance(double [] d1,double [] d2) {
+		double dist = 0;
+		int len = d1.length;
+		for (int i = 0; i < len; i++) {
+			dist += Math.pow(d1[i]-d2[i], 2);
+		}
+		return Math.sqrt(dist);
+	}
+
 	/**
 	 * Calcula a distancia de mahalanobis de x com o cluster
 	 * DM(x) = (x - mu)^T * S^-1 * (x-mu)
@@ -15,10 +23,10 @@ public class Arrays {
 	 * @param c
 	 * @return
 	 */
-	public static double mahalanobisDistance(double [] x,double [] mu, double[][] b) {
+	public static double mahalanobisDistance(double [] x,double [] mu, double[][] s) {
 		// DM(x) = (x - mu)^T * S^-1 * (x-mu)
 		// DM(x) = a * bInv * c
-		
+
 		//Calcula a e c
 		double[][]a= new double[1][x.length];
 		double[][]c= new double[x.length][1];
@@ -26,26 +34,28 @@ public class Arrays {
 			a[0][i] = x[i]-mu[i];
 			c[i][0] = x[i]-mu[i];
 		}
-		double [][] bInv = Matrix.inverseMatrix(Matrix.clone(b));
 		
-		if( (bInv[0][0]+"").equals("NaN") )	{
-			bInv = Matrix.moorepenroseInverseMatrix(b);
-			if(bInv==null) {
-				bInv = b;
+		double [][] sInv = (Math.abs(Matrix.determinant(s))>5E-9 ? 
+				Matrix.inverseMatrix_old(Matrix.clone(s)) : 
+				Matrix.identity(s.length));
+		
+
+		/*
+		double [][] sInv = 	Matrix.inverseMatrix_old(Matrix.clone(s));
+		if ( (sInv[0][0]+"").equals("NaN") || sInv[0][0] == Double.POSITIVE_INFINITY || sInv[0][0] == Double.NEGATIVE_INFINITY) {
+			sInv = Matrix.moorepenroseInverseMatrix(s);
+			if(sInv == null) {
+				return euclideanDistance(x,mu);
 			}
-			//bInv = Matrix.minorDiagonal(bInv.length);
-			//bInv = Matrix.transposta(b);
-			//bInv = b;
-			//bInv = Matrix.fill(bInv.length,  1);
-			//bInv = Matrix.identity(bInv.length);
 		}
-		
-		double [][] a_bInv = Matrix.multiply(a,bInv);
-		double [][] result = Matrix.multiply(a_bInv, c);
-//		System.out.println(result[0][0]);
-		return result[0][0];		
+		*/
+
+		double [][] a_sInv = Matrix.multiply(a,sInv);
+		double [][] result = Matrix.multiply(a_sInv, c);
+
+		return Math.sqrt(result[0][0]);
 	}
-	
+
 	/**
 	 * Shuffle two arrays in the same way
 	 * @param data
@@ -53,7 +63,7 @@ public class Arrays {
 	 */
 	public static void shuffle(Object[] data, Object[] target) {
 		int n = data.length;
-		for (int i = 0; i < data.length; i++) {
+		for (int i = 0; i < n; i++) {
 			// Get a random index of the array past i.
 			int random = i + Mat.random(n-i);
 			// Swap the random element with the present element.
@@ -92,12 +102,12 @@ public class Arrays {
 		if(max-min < 2)
 			return;
 		int mean = (max+min)/2;
-		
+
 		topDownSplitMerge(a,o, min, mean, b,bo);
 		topDownSplitMerge(a,o, mean, max, b,bo);
 		topDownMerge(b,bo, min, mean, max, a,o);
 	}
-	
+
 	/**
 	 * Sub-method of mergeSortBy
 	 * @param b
@@ -121,5 +131,35 @@ public class Arrays {
 				j++;
 			}
 		}
+	}
+	
+	public static boolean isValid(double [][] m) {
+		boolean valid = true;
+		int i = 0, j=0;
+		while (i < m.length && valid) {
+			while ( j < m[0].length && valid) {
+				valid = m[i][j] != Double.NaN && m[i][j] != Double.NEGATIVE_INFINITY && m[i][j] != Double.POSITIVE_INFINITY;
+			}
+		}
+		return valid;
+	}
+
+	public static double[] sum(double[] ds, double[] ds2, double d) {
+		int n = ds.length;
+		double[] ret = new double[n];
+
+		for(int i = 0; i < n; i++) {
+			ret[i] = ds[i]+ds2[i]*d;
+		}
+		return ret;
+	}
+
+	public static double[] multiply(double[] v, double d) {
+		int n = v.length;
+		double[] ret = new double[n];
+		for(int i = 0; i < n; i++) {
+			ret[i] = v[i]*d;
+		}
+		return ret;
 	}
 }
