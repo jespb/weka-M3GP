@@ -88,7 +88,7 @@ public class Matrix {
 	 */
 	private static double min(double[][] a, int m) {
 		double min = a[0][0];
-		
+
 		int ylen = a.length, xlen=a[0].length;
 		for(int y = 0; y < ylen; y++) {
 			for(int x = 0; x < xlen; x++) {
@@ -124,7 +124,7 @@ public class Matrix {
 	 */
 	public static double[][] section(double[][] m, int[] ds) {
 		double [][] ret = new double[(int) (Math.abs(ds[0]-ds[1])+1)][(int) (Math.abs(ds[2]-ds[3])+1)];
-		
+
 		// Alt 1
 		/*
 		boolean ydirection = ds[1]>=ds[0];
@@ -136,8 +136,8 @@ public class Matrix {
 				ret[y][x] = m[ydirection? ds[0]+y : ds[0]-y][xdirection? ds[2]+x : ds[2]-x];
 			}
 		}
-		*/
-		
+		 */
+
 		// Alt 2
 		int direction = (ds[1]>=ds[0]?1:0) + (ds[3]>=ds[2]?2:0); 
 		int ylen = ret.length, xlen = ret[0].length;
@@ -171,7 +171,7 @@ public class Matrix {
 			}
 			break;
 		}
-		
+
 		return ret;
 	}
 
@@ -279,18 +279,40 @@ public class Matrix {
 		}
 		return result;
 	}
-	
-	public static double[][]  inverseMatrix(double [][] m) {
+
+	public static double[][] inverseMatrix(double  [][] m){
+		m = clone(m);
+		//return inverseMatrix_new(m);
+		return inverseMatrix_old(m);
+	}
+
+	public static double[][] inverseMatrix_new(double [][] m) {
 		int n = m.length;
 
-		m = Matrix.clone(m);
 		double [][] inv = Matrix.identity(n);
 
 		double d;
-		
+
 		for(int i = 0; i < n; i++) {
+			if(m[i][i]==0) {
+				for(int k = i+1; k < n; k++) {
+					if(m[k][i] != 0) {
+						double [] tmp = m[i];
+						m[i] = m[k];
+						m[k] = tmp;
+
+						tmp = inv[i];
+						inv[i] = inv[k];
+						inv[k] = tmp;
+
+						k=n;//stop
+					}
+				}
+			}
+
 			for(int y = i+1; y< n; y++) {
 				d= -m[y][i] / m[i][i];
+
 				for(int k = 0; k < n; k++) {
 					inv[y][k] += inv[i][k]*d;
 					m[y][k] += m[i][k]*d;
@@ -298,22 +320,27 @@ public class Matrix {
 			}
 		}
 		
-		for(int i = 0; i < n; i++) {
-			d = 1/m[i][i];
-			inv[i] = Arrays.multiply(inv[i], d);
-			m[i] = Arrays.multiply(m[i], d);
+		if(m[n-1][n-1] == 0) {
+			return fill(m.length, Double.NaN);
 		}
-		
-		for(int y = 0; y < n; y++) {
-			for(int x = y+1; x< n; x++) {
-				d = -m[y][x];
-				for(int k = y>0?y-1:0; k < n; k++) {
-					inv[y][k] += inv[x][k]*d;
-					m[y][k] += m[x][k]*d;
-				}
-				
+
+		for(int i = 0; i < n; i++) {
+			d = m[i][i];
+			for(int k = 0; k < n; k++) {
+				inv[i][k] /= d;
+				m[i][k] /= d;
 			}
 		}
+
+		for(int x = n-1; x > 0; x--) {
+			for(int y = x-1; y >= 0; y--) {
+				d = -m[y][x];
+				for(int k = 0; k < n; k++)
+					inv[y][k] += inv[x][k] * d;
+				m[y][x]   += m[x][x]   * d;
+			}
+		}
+		
 		return inv;
 	}
 
@@ -325,7 +352,7 @@ public class Matrix {
 
 		// Transform the matrix into an upper triangle
 		gaussian(a, index);
-		
+
 		// Update the matrix b[i][j] with the ratios stored
 		for (int i=0; i<n-1; i++)
 			for (int j=i+1; j<n; j++)
@@ -342,7 +369,7 @@ public class Matrix {
 
 				for (int k=j+1; k<n; k++)
 					x[j][i] -= a[index[j]][k]*x[k][i];
-				
+
 				x[j][i] /= a[index[j]][j];
 			}
 		}
@@ -351,7 +378,7 @@ public class Matrix {
 
 	// Method to carry out the partial-pivoting Gaussian
 	// elimination.  Here index[] stores pivoting order.
-	private static void gaussian(double a[][], int index[]){
+	public static void gaussian(double a[][], int index[]){
 		int n = index.length;
 		double c[] = new double[n];
 
@@ -365,7 +392,7 @@ public class Matrix {
 
 			for (int j=0; j<n; j++)
 				c1 = Math.max(Math.abs(a[i][j]),c1);
-			
+
 			c[i] = c1;
 		}
 
@@ -417,12 +444,12 @@ public class Matrix {
 		for(int y = 0; y < b.length; y++) 
 			for(int x = 0; x < b[0].length; x++) 
 				ret[y][x]=b[y][x];
-			
-		
+
+
 		return ret;
 	}
-	
-	
+
+
 	public static double determinant(double [][] m) {
 		double det = 1;
 		int n = m.length;
@@ -430,11 +457,11 @@ public class Matrix {
 		for(int y = 1; y < n; y++)
 			for(int y2 = y; y2< n; y2++) 
 				m[y2] = Arrays.sum(m[y2], m[y-1], -m[y2][y-1]/m[y-1][y-1]);
-		
+
 
 		for(int i = 0; i < n; i++) 
 			det *= m[i][i];
-		
+
 		return det;
 	}
 }

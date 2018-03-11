@@ -24,7 +24,10 @@ public class Tree implements Serializable{
 
 	private ArrayList<double[][]> covarianceMatrix = null;
 	private ArrayList<double[]> mu = null;
-	private ArrayList<String> classes;
+	ArrayList<String> classes;
+	
+	private String[] target;
+	private double[][] map;
 
 	/**
 	 * Constructor
@@ -65,8 +68,19 @@ public class Tree implements Serializable{
 		}
 		return size;
 	}
+	
+	public double[][] getMap(){
+		return map;
+	}
+	
+	public String[] getTarget() {
+		return target;
+	}
 
 	private void makeCluster(double [][] data, String [] target, double trainFract) {
+		this.target = target;
+		this.map = new double[(int)(data.length * trainFract)][dimensions.size()];
+		
 		classes = new ArrayList<String>();
 		ArrayList<ArrayList<double []>> clusters = new ArrayList<ArrayList<double[]>>();
 
@@ -86,6 +100,7 @@ public class Tree implements Serializable{
 			for(int j = 0; j < dimensions.size(); j++) {
 				d[j] = calculate(j,data[i]);
 			}
+			map[i] = d;
 			clusters.get(index).add(d);
 		}
 
@@ -112,39 +127,27 @@ public class Tree implements Serializable{
 	private double calculate(int dimension, double [] d) {
 		return dimensions.get(dimension).calculate(d);
 	}
-
-	static long t_ax, t_c = 0, t_d = 0, t_i=0;
-	public String predict(double [] d) {
-		t_ax = System.currentTimeMillis();
-		//Calcula o valor em cada dimensao
+	
+	double[] calculateAll(double [] d) {
 		double [] result = new double [dimensions.size()];
 		for(int i = 0; i < result.length; i++) {
 			result[i] = calculate(i,d);
 		}
-		t_c += System.currentTimeMillis()-t_ax;
-
-
-		t_ax = System.currentTimeMillis();
+		return result;
+	}
+	
+	double[] calculateMHLNB(double [] result) {
 		double [] distancias = new double[classes.size()];
 		for(int i = 0; i < distancias.length; i++) {
 			distancias[i] = Arrays.mahalanobisDistance(result, 
 					mu.get(i), covarianceMatrix.get(i));
 		}
-		t_d += System.currentTimeMillis()-t_ax;
+		return distancias;
+	}
 
-		double minDist = distancias[0];
-		String prediction = classes.get(0);
-		for(int i = 0; i < distancias.length; i++) {
-			if(distancias[i] < minDist) {
-				minDist = distancias[i];
-				prediction = classes.get(i);
-			}
-		}
-
-		t_i ++;
-		if( t_i % 100000 == 0) System.out.println("calc: " + t_c + "  dist: " + t_d);
-		// 29.700s na distancia gen35 
-		return prediction;
+	static long t_ax, t_c = 0, t_d = 0, t_i=0;
+	public String predict(double [] d) {
+		return Classification.predict(this, d);
 	}
 
 	public ArrayList<Node> getDimensions() {
@@ -178,7 +181,9 @@ public class Tree implements Serializable{
 			for(int dim = 0; dim < dimensions.size(); dim++) {
 				sb.append( "\"" + dimensions.get(dim).calculate(data[i]) +"\"," );
 			}
-			sb.append( "\"" + predict(data[i]) +"\",\"" + target[i]+"\"]");
+			sb.append( "\"" + Classification.predict(this, data[i], 0) +"\",\""
+					+ Classification.predict(this, data[i], 1) +"\",\""
+					+ Classification.predict(this, data[i], 2) +"\",\""+ target[i]+"\"]");
 			if (i < data.length*trainFraction-1)
 				sb.append(",");
 			sb.append("\n");
@@ -230,7 +235,7 @@ public class Tree implements Serializable{
 
 	
 
-	public double getTrainMeanDistanceToCentroid(double [][] data, String[] target, double trainFract) {
+	public double getTrainRootMeanSquaredDistanceToCentroid(double [][] data, String[] target, double trainFract) {
 		if (covarianceMatrix == null) {
 			makeCluster(data, target, trainFract);
 		}
@@ -242,12 +247,12 @@ public class Tree implements Serializable{
 			for(int d = 0;d < dimensions.size(); d++) {
 				coor[d] = dimensions.get(d).calculate(data[i]);
 			}
-			acc_distance += Arrays.euclideanDistance(coor, mu.get(classes.indexOf(target[i])));
+			acc_distance += Math.pow(Arrays.euclideanDistance(coor, mu.get(classes.indexOf(target[i]) )),2 );
 		}
-		return acc_distance/set_size;
+		return Math.sqrt(acc_distance/set_size);
 	}
 	
-	public double getTestMeanDistanceToCentroid(double [][] data, String[] target, double trainFract) {
+	public double getTestRootMeanSquaredDistanceToCentroid(double [][] data, String[] target, double trainFract) {
 		if (covarianceMatrix == null) {
 			makeCluster(data, target, trainFract);
 		}
@@ -259,9 +264,9 @@ public class Tree implements Serializable{
 			for(int d = 0;d < dimensions.size(); d++) {
 				coor[d] = dimensions.get(d).calculate(data[i]);
 			}
-			acc_distance += Arrays.euclideanDistance(coor, mu.get(classes.indexOf(target[i])));
-		}
-		return acc_distance/set_size;
+			acc_distance += Math.pow(Arrays.euclideanDistance(coor, mu.get(classes.indexOf(target[i]) )),2 );
+			}
+		return Math.sqrt(acc_distance/set_size);
 	}
 
 	public double getMeanDistanceBetweenCentroids(double [][] data, String[] target, double trainFract) {
@@ -284,6 +289,77 @@ public class Tree implements Serializable{
 		for(int i = 0; i < dimensions.size(); i++) {
 			dimensions.get(i).clean();
 		}
+	}
+
+	public double getTrainRootMeanSquaredMHLNBDistanceToCentroid(double[][] data, String[] target, double trainFraction) {
+		if (covarianceMatrix == null) {
+			makeCluster(data, target, trainFraction);
+		}
+				
+		double acc_distance = 0;
+		double set_size = (int)(data.length*trainFraction);
+		for(int i = 0; i < set_size; i++) {
+			double [] result = calculateAll(data[i]);
+			int index = classes.indexOf(target[i]);
+			double distance = Arrays.mahalanobisDistance(result,mu.get(index), covarianceMatrix.get(index));
+			acc_distance += Math.pow(distance,2);
+		}
+		return Math.sqrt(acc_distance/set_size);
+	}
+	
+	public double getTestRootMeanSquaredMHLNBDistanceToCentroid(double[][] data, String[] target, double trainFraction) {
+		if (covarianceMatrix == null) {
+			makeCluster(data, target, trainFraction);
+		}
+				
+		double acc_distance = 0;
+		int set_size = (int)(data.length*trainFraction);
+		for(int i = set_size; i < data.length; i++) {
+			double [] result = calculateAll(data[i]);
+			double [] distances = calculateMHLNB(result);
+			acc_distance += Math.pow(distances[classes.indexOf(target[i])],2);
+		}
+		return Math.sqrt(acc_distance/set_size);
+	}
+
+	public double getMeanManhattanDistanceBetweenCentroids(double[][] data, String[] target, double trainFraction) {
+		if (covarianceMatrix == null) {
+			makeCluster(data, target, trainFraction);
+		}
+		
+		double total_distance = 0;
+		for(int i = 0; i < mu.size(); i++) {
+			for(int j = i+1; j < mu.size(); j++) {
+				total_distance += Arrays.manhattanDistance(mu.get(i), mu.get(j));
+			}
+		}
+		total_distance /= mu.size()*(mu.size()-1)/2;
+		// TODO Auto-generated method stub
+		return total_distance;
+	}
+
+	public double getMeanManhattanDistanceToCentroids(double[][] data, String[] target, double trainFraction) {
+		if (covarianceMatrix == null) {
+			makeCluster(data, target, trainFraction);
+		}
+				
+		double acc_distance = 0;
+		double set_size = (int)(data.length*trainFraction);
+		for(int i = 0; i < set_size; i++) {
+			double [] result = calculateAll(data[i]);
+			int index = classes.indexOf(target[i]);
+			double distance = Arrays.manhattanDistance(result,mu.get(index));
+			acc_distance += distance;
+		}
+		return Math.sqrt(acc_distance/set_size);
+	}
+
+	public double[] calculateEucDistances(double[] result) {
+		double [] dist =  new double[mu.size()];
+		for (int i = 0; i < dist.length; i++) {
+			dist[i] = Arrays.euclideanDistance(result, mu.get(i));
+		}
+		return dist;
 	}
 	
 }

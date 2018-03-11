@@ -15,11 +15,11 @@ import weka.classifiers.trees.m3gp.util.Data;
  */
 public class ClientWekaSim {
 
-	private static int file = 3; // ST, GS
+	private static int file = 9; // ST, GS
 
-	private static String filename = "brazil.csv heart.csv waveform.csv vowel.csv".split(" ")[file];
+	private static String filename = "brazil.csv heart.csv waveform.csv vowel.csv mcd3.csv yeast.csv movl.csv breast-cancer-wisconsin.csv mcd10.csv seg.csv".split(" ")[file];
 	private static String datasetFilename = "datasets\\" + filename;
-	private static String treeType = "Ramped";
+	private static String treeType = "Full";
 
 	public static String [] operations = "+ - * /".split(" ");
 	private static String [] terminals = null;
@@ -31,7 +31,7 @@ public class ClientWekaSim {
 	private static double elitismFraction = 0.002 * speed ;
 
 	private static int numberOfGenerations = 100;
-	private static int initialRun_ID = 20;
+	private static int initialRun_ID =0;
 	private static int numberOfRuns = 10;
 	private static int populationSize = 500 / speed;
 	private static int maxDepth = 6;

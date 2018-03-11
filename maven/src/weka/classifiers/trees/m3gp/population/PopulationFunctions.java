@@ -12,10 +12,11 @@ public class PopulationFunctions {
 	 * 1 : Mean distance to centroid
 	 * -2 : accuracy - mean distance to centroid as a very small value
 	 * -3 : accuracy - sigmoid(#dimensions)/trainset_size
-	 * -4 : sigmoid(mean dist between clusters) - sigmoin(mean distance of points to the centroids)
+	 * -4 : sigmoid(rms dist between clusters) - sigmoin(mean distance of points to the centroids)
 	 * -5 : accuracy - sigmoid(#nodes)/trainset_size
+	 * -6 : sigmoid(rms mhlnb dist between clusters) - sigmoin(mean distance of points to the centroids)
 	 */
-	static int fitnessType = -5;
+	static int fitnessType = -4;
 	public static double fitnessTrain(Tree t, double [][] data, String [] target, double trainFraction) {
 		double d = 0,acc,dist_ce,d_size, dist_cl;
 		switch (fitnessType){
@@ -23,11 +24,11 @@ public class PopulationFunctions {
 			d = t.getTrainAccuracy(data, target, trainFraction); 
 			break;
 		case 1:
-			d = t.getTrainMeanDistanceToCentroid(data, target, trainFraction); 
+			d = t.getTrainRootMeanSquaredDistanceToCentroid(data, target, trainFraction); 
 			break;
 		case -2:
 			acc = t.getTrainAccuracy(data, target, trainFraction); 
-			dist_ce = t.getTrainMeanDistanceToCentroid(data, target, trainFraction); 
+			dist_ce = t.getTrainRootMeanSquaredDistanceToCentroid(data, target, trainFraction); 
 			dist_ce = Mat.sigmod(dist_ce);
 			d = acc - dist_ce/(data.length*trainFraction);			
 			break;
@@ -39,14 +40,22 @@ public class PopulationFunctions {
 			break;
 		case -4:
 			dist_cl = Mat.sigmod(t.getMeanDistanceBetweenCentroids(data, target, trainFraction)/t.getDimensions().size());
-			dist_ce = Mat.sigmod(t.getTrainMeanDistanceToCentroid(data, target, trainFraction)/t.getDimensions().size()); 
+			dist_ce = Mat.sigmod(t.getTrainRootMeanSquaredDistanceToCentroid(data, target, trainFraction)/t.getDimensions().size()); 
 			d = dist_cl-dist_ce;
 		case -5:
 			acc = t.getTrainAccuracy(data, target, trainFraction); 
 			d_size = t.getSize();
-			d_size = Mat.sigmod(d_size/100.0);
+			d_size = Mat.sigmod(Math.sqrt(d_size/100.0));
 			d = acc - d_size/(data.length*trainFraction);
 			break;
+		case -6:
+			dist_cl = Mat.sigmod(t.getMeanDistanceBetweenCentroids(data, target, trainFraction)/t.getDimensions().size());
+			dist_ce = Mat.sigmod(t.getTrainRootMeanSquaredMHLNBDistanceToCentroid(data, target, trainFraction)/t.getDimensions().size()); 
+			d = dist_cl-dist_ce;
+		case -7:
+			dist_cl = t.getMeanManhattanDistanceBetweenCentroids(data, target, trainFraction) / t.getDimensions().size();
+			dist_ce = t.getMeanManhattanDistanceToCentroids(data, target, trainFraction) / t.getDimensions().size();
+			d = dist_cl - dist_ce;
 		}
 		return d;		
 	}
@@ -58,11 +67,11 @@ public class PopulationFunctions {
 			d = t.getTestAccuracy(data, target, trainFraction); 
 			break;
 		case 1:
-			d = t.getTestMeanDistanceToCentroid(data, target, trainFraction); 
+			d = t.getTestRootMeanSquaredDistanceToCentroid(data, target, trainFraction); 
 			break;
 		case -2:
 			acc = t.getTestAccuracy(data, target, trainFraction); 
-			dist_ce = t.getTestMeanDistanceToCentroid(data, target, trainFraction); 
+			dist_ce = t.getTestRootMeanSquaredDistanceToCentroid(data, target, trainFraction); 
 			dist_ce = Mat.sigmod(dist_ce);
 			d = acc + dist_ce/(data.length - data.length*trainFraction);			
 			break;
@@ -74,14 +83,18 @@ public class PopulationFunctions {
 			break;
 		case -4:
 			dist_cl = Mat.sigmod(t.getMeanDistanceBetweenCentroids(data, target, trainFraction));
-			dist_ce = Mat.sigmod(t.getTestMeanDistanceToCentroid(data, target, trainFraction)); 
+			dist_ce = Mat.sigmod(t.getTestRootMeanSquaredDistanceToCentroid(data, target, trainFraction)); 
 			d = dist_cl-dist_ce;
 		case -5:
 			acc = t.getTestAccuracy(data, target, trainFraction); 
 			d_size = t.getSize();
-			d_size = Mat.sigmod(d_size);
+			d_size = Mat.sigmod(Math.sqrt(d_size/100.0));
 			d = acc - d_size/(data.length*trainFraction);			
 			break;
+		case -6:
+			dist_cl = Mat.sigmod(t.getMeanDistanceBetweenCentroids(data, target, trainFraction));
+			dist_ce = Mat.sigmod(t.getTestRootMeanSquaredMHLNBDistanceToCentroid(data, target, trainFraction)); 
+			d = dist_cl-dist_ce;
 		}
 		return d;
 	}
@@ -136,12 +149,15 @@ public class PopulationFunctions {
 
 
 	public static Tree prun(Tree tree, double[][] data, String[] target, double trainFraction) {
-		return TreePruningHandler.prun(tree, data, target, trainFraction);
+		Tree t = TreePruningHandler.prun(tree, data, target, trainFraction);
+		for ( int i = 0; i < Math.sqrt(tree.getDimensions().size())+1; i++)
+			t = TreePruningHandler.prun(t, data, target, trainFraction);
+		return t;
 	}
 
 	public static boolean betterTrain(Tree t1, Tree t2, double[][] data, String[] target, double trainFract) {
 		double t1_fit = fitnessTrain(t1,data,target,trainFract);
 		double t2_fit = fitnessTrain(t2,data,target,trainFract);
-		return smallerIsBetter? t1_fit < t2_fit : t1_fit > t2_fit; 
+		return smallerIsBetter? t1_fit <= t2_fit : t1_fit >= t2_fit; 
 	}
 }

@@ -16,10 +16,12 @@ public class ReadJSON {
 		double [][] tr_points = new double [0][0];
 		double [][] te_points = new double [0][0];
 
-		String dataset = "brazil heart wave vowel".split(" ")[3];
+		int ds = 1, fun=1, pred = 1;
+		String dataset = "brazil heart waveform vowel".split(" ")[ds];
+		String sig = "BRZ HRT WAV VOW".split(" ")[ds];
 		
 		BufferedWriter scatterplot = new BufferedWriter(new FileWriter(dataset+"_scatterplot.txt"));
-		Object []  o = readTrainPoint("Run_0_"+dataset+".json");
+		Object []  o = readTrainPoint("resultados\\"+sig+"_"+fun+"_"+pred+"\\"+"Run_0_"+dataset+".json");
 		ArrayList<double[]> points = (ArrayList<double[]>) o[0];
 		ArrayList<String> classes = (ArrayList<String>) o[1];
 		scatterplot.write("rows = " + points.size() + "\n");
@@ -38,7 +40,7 @@ public class ReadJSON {
 		
 		
 		for(int i = 0; i < nruns; i++) {
-			String filename = "Run_"+i+"_"+dataset+".json";
+			String filename = "resultados\\"+sig+"_"+fun+"_"+pred+"\\"+"Run_"+i+"_"+dataset+".json";
 			Object [] tmp = confusionMatrix(filename);
 			ArrayList<int[][]> train = (ArrayList<int[][]>) tmp[0];
 			ArrayList<int[][]> test = (ArrayList<int[][]>) tmp[1];
@@ -55,15 +57,17 @@ public class ReadJSON {
 		
 		BufferedWriter boxplot = new BufferedWriter(new FileWriter(dataset+"_boxplot.txt"));
 		
-		boxplot.write("boxplot(c(" + te_acc[0]);
+		boxplot.write("test <- c(");
+		
+		boxplot.write(""+te_acc[0]);
 		for(int i = 1; i < te_acc.length; i++) {
 			boxplot.write("," + te_acc[i]);
 		}
-		boxplot.write("),c(" + te_acc[0]);
+		boxplot.write(")\ntrain <- c(" + tr_acc[0]);
 		for(int i = 1; i < tr_acc.length; i++) {
 			boxplot.write("," + tr_acc[i]);
 		}
-		boxplot.write("))");
+		boxplot.write(")\nboxplot(test,train)");
 		boxplot.close();
 		
 		/*

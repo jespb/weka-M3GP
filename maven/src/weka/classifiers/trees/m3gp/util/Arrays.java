@@ -1,5 +1,6 @@
 package weka.classifiers.trees.m3gp.util;
 
+import java.util.ArrayList;
 
 /**
  * 
@@ -35,20 +36,14 @@ public class Arrays {
 			c[i][0] = x[i]-mu[i];
 		}
 		
-		double [][] sInv = (Math.abs(Matrix.determinant(s))>5E-9 ? 
-				Matrix.inverseMatrix_old(Matrix.clone(s)) : 
-				Matrix.identity(s.length));
-		
 
-		/*
-		double [][] sInv = 	Matrix.inverseMatrix_old(Matrix.clone(s));
-		if ( (sInv[0][0]+"").equals("NaN") || sInv[0][0] == Double.POSITIVE_INFINITY || sInv[0][0] == Double.NEGATIVE_INFINITY) {
+		double [][] sInv = 	Matrix.inverseMatrix(s);
+		if ( sInv[0][0] == Double.NaN || (sInv[0][0]+"").equals("NaN") || sInv[0][0] == Double.POSITIVE_INFINITY || sInv[0][0] == Double.NEGATIVE_INFINITY) {
 			sInv = Matrix.moorepenroseInverseMatrix(s);
 			if(sInv == null) {
 				return euclideanDistance(x,mu);
 			}
 		}
-		*/
 
 		double [][] a_sInv = Matrix.multiply(a,sInv);
 		double [][] result = Matrix.multiply(a_sInv, c);
@@ -161,5 +156,42 @@ public class Arrays {
 			ret[i] = v[i]*d;
 		}
 		return ret;
+	}
+
+	public static double min(double[] v) {
+		double min = v[0];
+		for(int i = 0 ; i < v.length; i++)
+			min = Math.min(min, v[i]);
+		return min;
+	}
+
+	public static double manhattanDistance(double[] ds, double[] ds2) {
+		double distance = 0;
+		for (int i = 0; i < ds.length; i++) {
+			distance += Math.abs(ds[i]-ds2[i]);
+		}
+		return distance;
+	}
+
+	public static String mostCommon(String[] s) {
+		ArrayList<String> str = new ArrayList<String>();
+		int [] ints = new int[s.length];
+		for(int i = 0; i < s.length; i++) {
+			if(str.contains(s[i])) {
+				ints[str.indexOf(s[i])]++;
+			}else {
+				str.add(s[i]);
+				ints[str.indexOf(s[i])]++;
+			}
+		}
+		String predict = str.get(0);
+		int occ = ints[0];
+		for(int i = 1; i < ints.length; i++) {
+			if(ints[i] > occ) {
+				occ=ints[i];
+				predict = str.get(i);
+			}
+		}
+		return predict;
 	}
 }

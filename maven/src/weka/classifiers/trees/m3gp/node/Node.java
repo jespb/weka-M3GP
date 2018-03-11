@@ -158,7 +158,7 @@ public class Node implements Serializable{
 	 */
 	public String toString(String [] operations){
 		if(isLeaf()){
-			if (v<1)
+			if (v != (int)v)
 				return v+"";
 			else
 				return "x"+(int)v;
