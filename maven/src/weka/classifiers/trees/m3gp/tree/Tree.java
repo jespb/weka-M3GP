@@ -181,9 +181,7 @@ public class Tree implements Serializable{
 			for(int dim = 0; dim < dimensions.size(); dim++) {
 				sb.append( "\"" + dimensions.get(dim).calculate(data[i]) +"\"," );
 			}
-			sb.append( "\"" + Classification.predict(this, data[i], 0) +"\",\""
-					+ Classification.predict(this, data[i], 1) +"\",\""
-					+ Classification.predict(this, data[i], 2) +"\",\""+ target[i]+"\"]");
+			sb.append( "\"" + target[i]+"\"]");
 			if (i < data.length*trainFraction-1)
 				sb.append(",");
 			sb.append("\n");
@@ -197,7 +195,7 @@ public class Tree implements Serializable{
 			for(int dim = 0; dim < dimensions.size(); dim++) {
 				sb.append( "\"" + dimensions.get(dim).calculate(data[i]) +"\"," );
 			}
-			sb.append( "\"" + predict(data[i]) +"\",\"" + target[i]+"\"]");
+			sb.append( "\"" +  target[i]+"\"]");
 			if (i < data.length-1)
 				sb.append(",");
 			sb.append("\n");

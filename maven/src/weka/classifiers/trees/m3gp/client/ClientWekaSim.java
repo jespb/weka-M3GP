@@ -1,8 +1,10 @@
 package weka.classifiers.trees.m3gp.client;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import weka.classifiers.trees.m3gp.population.Population;
 import weka.classifiers.trees.m3gp.util.Arrays;
@@ -15,10 +17,10 @@ import weka.classifiers.trees.m3gp.util.Data;
  */
 public class ClientWekaSim {
 
-	private static int file = 9; // ST, GS
+	private static int file = 5; // ST, GS
 
-	private static String filename = "brazil.csv heart.csv waveform.csv vowel.csv mcd3.csv yeast.csv movl.csv breast-cancer-wisconsin.csv mcd10.csv seg.csv".split(" ")[file];
-	private static String datasetFilename = "datasets\\" + filename;
+	private static String filename = "heart.csv wav.csv vowel.csv mcd3.csv yeast.csv movl.csv breast-cancer-wisconsin.csv mcd10.csv seg.csv".split(" ")[file];
+	private static String datasetFilename = "datasets" + File.separator + filename;
 	private static String treeType = "Full";
 
 	public static String [] operations = "+ - * /".split(" ");
@@ -32,7 +34,7 @@ public class ClientWekaSim {
 
 	private static int numberOfGenerations = 100;
 	private static int initialRun_ID =0;
-	private static int numberOfRuns = 10;
+	private static int numberOfRuns = 30;
 	private static int populationSize = 500 / speed;
 	private static int maxDepth = 6;
 
@@ -54,6 +56,13 @@ public class ClientWekaSim {
 	 */
 	public static void main(String[] args) throws IOException {
 		treatArgs(args);
+		if(args.length == 2) {
+			System.out.println(args[0] + " " + args[1]);
+			filename = args[0];
+			datasetFilename = "datasets" + File.separator + filename;
+			numberOfRuns=1;
+			initialRun_ID=Integer.parseInt(args[1]);
+		}
 		init();
 
 		long time = System.currentTimeMillis();
