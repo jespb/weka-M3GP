@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 
 import weka.classifiers.trees.m3gp.client.ClientWekaSim;
 import weka.classifiers.trees.m3gp.tree.Tree;
+import weka.classifiers.trees.m3gp.tree.TreeGeneticOperatorHandler;
 import weka.classifiers.trees.m3gp.util.Arrays;
 
 /**
@@ -98,6 +99,16 @@ public class Population{
 		
 		Tree.trainSize = (int)(target.length * trainFraction);		
 	}
+	
+	public int[] calcGOAC() {
+		int [] goac = new int [population[0].getGOAC().length];
+		for(Tree t: population) {
+			for (int i = 0; i < goac.length; i++) {
+				goac[i] += t.getGOAC()[i];
+			}
+		}
+		return goac;
+	}
 
 	/**
 	 * Trains the classifier
@@ -107,6 +118,7 @@ public class Population{
 
 		generation = 0;
 		while(improving()){
+			ClientWekaSim.datafile.write("        \"GOAC\":\"" + Arrays.arrayToString(Arrays.multiply(calcGOAC(), 1.0/(generation+1)))  + "\"\n");
 			ClientWekaSim.datafile.write("        \"Individuals\":{\n");
 			
 			if(generation%5 == 0)
@@ -185,6 +197,12 @@ public class Population{
 		long timeSelectAndCross = System.currentTimeMillis();
 		Tree[] cross;
 		for(int i = 1+elitismSize; i < nextGen.length; i++){
+			cross = TreeGeneticOperatorHandler.geneticOperation(population, tournamentSize, operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
+			for(int k = 0; k < cross.length && k+i < population.length; k++){
+				nextGen[i+k]=cross[k];
+			}
+			i+=cross.length-1;
+			/*
 			if(Math.random() < 0.50) {//TODO default = 0.50
 				cross = crossover(population);
 				if(cross[0].getDepth() <= 17) {
@@ -206,6 +224,7 @@ public class Population{
 					i --;
 				}
 			}
+			*/
 		}
 		timeSelectAndCross = System.currentTimeMillis()-timeSelectAndCross;
 		
@@ -218,7 +237,7 @@ public class Population{
 		double train = bestTree.getTrainAccuracy(data, target, trainFraction);
 		double test = bestTree.getTestAccuracy(data, target, trainFraction);
 		
-		System.out.println(generation + ": " + train + " // " + test + "///" + timeFitness + "//" + timePruning + "//" + timeFile +"//" + timeSelectAndCross);
+		System.out.println(generation + ": " + train + " // " + test + "///" + Arrays.arrayToString(calcGOAC()));
 		
 		population = nextGen;
 		

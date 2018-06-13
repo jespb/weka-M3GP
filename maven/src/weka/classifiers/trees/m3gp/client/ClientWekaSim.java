@@ -17,9 +17,9 @@ import weka.classifiers.trees.m3gp.util.Data;
  */
 public class ClientWekaSim {
 
-	private static int file = 0; // ST, GS
+	private static int file = 7; // ST, GS
 
-	private static String[] filenames = "heart.csv wav.csv vowel.csv mcd3.csv yeast.csv movl.csv mcd10.csv seg.csv".split(" ");
+	private static String[] filenames = "heart.csv mcd3.csv mcd10.csv movl.csv seg.csv vowel.csv wav.csv yeast.csv".split(" ");
 	private static String filename = filenames[file];
 	private static String datasetFilename = "datasets" + File.separator + filename;
 	private static String treeType = "Full";

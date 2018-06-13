@@ -19,25 +19,7 @@ public class PopulationFunctions {
 	static int fitnessType = -4;
 	public static double fitnessTrain(Tree t, double [][] data, String [] target, double trainFraction) {
 		double d = 0,acc,dist_ce,d_size, dist_cl;
-		switch (fitnessType){
-		case -1:
-			d = t.getTrainAccuracy(data, target, trainFraction); 
-			break;
-		case 1:
-			d = t.getTrainRootMeanSquaredDistanceToCentroid(data, target, trainFraction); 
-			break;
-		case -2:
-			acc = t.getTrainAccuracy(data, target, trainFraction); 
-			dist_ce = t.getTrainRootMeanSquaredDistanceToCentroid(data, target, trainFraction); 
-			dist_ce = Mat.sigmod(dist_ce);
-			d = acc - dist_ce/(data.length*trainFraction);			
-			break;
-		case -3:
-			acc = t.getTrainAccuracy(data, target, trainFraction); 
-			d_size = t.getDimensions().size();
-			d_size = Mat.sigmod(d_size);
-			d = acc - d_size/(data.length*trainFraction);			
-			break;
+		switch (fitnessType){		
 		case -4:
 			dist_cl = Mat.sigmod(t.getMeanDistanceBetweenCentroids(data, target, trainFraction)/t.getDimensions().size());
 			dist_ce = Mat.sigmod(t.getTrainRootMeanSquaredDistanceToCentroid(data, target, trainFraction)/t.getDimensions().size()); 
@@ -60,45 +42,6 @@ public class PopulationFunctions {
 		return d;		
 	}
 
-	static double fitnessTest(Tree t, double [][] data, String [] target, double trainFraction) {
-		double d = 0,acc,dist_ce,d_size, dist_cl;
-		switch (fitnessType){
-		case -1:
-			d = t.getTestAccuracy(data, target, trainFraction); 
-			break;
-		case 1:
-			d = t.getTestRootMeanSquaredDistanceToCentroid(data, target, trainFraction); 
-			break;
-		case -2:
-			acc = t.getTestAccuracy(data, target, trainFraction); 
-			dist_ce = t.getTestRootMeanSquaredDistanceToCentroid(data, target, trainFraction); 
-			dist_ce = Mat.sigmod(dist_ce);
-			d = acc + dist_ce/(data.length - data.length*trainFraction);			
-			break;
-		case -3:
-			acc = t.getTestAccuracy(data, target, trainFraction); 
-			d_size = t.getDimensions().size();
-			d_size = Mat.sigmod(d_size);
-			d = acc - d_size/(data.length*trainFraction);			
-			break;
-		case -4:
-			dist_cl = Mat.sigmod(t.getMeanDistanceBetweenCentroids(data, target, trainFraction));
-			dist_ce = Mat.sigmod(t.getTestRootMeanSquaredDistanceToCentroid(data, target, trainFraction)); 
-			d = dist_cl-dist_ce;
-		case -5:
-			acc = t.getTestAccuracy(data, target, trainFraction); 
-			d_size = t.getSize();
-			d_size = Mat.sigmod(Math.sqrt(d_size/100.0));
-			d = acc - d_size/(data.length*trainFraction);			
-			break;
-		case -6:
-			dist_cl = Mat.sigmod(t.getMeanDistanceBetweenCentroids(data, target, trainFraction));
-			dist_ce = Mat.sigmod(t.getTestRootMeanSquaredMHLNBDistanceToCentroid(data, target, trainFraction)); 
-			d = dist_cl-dist_ce;
-		}
-		return d;
-	}
-
 	/**
 	 * Picks as many trees from population as the size of the tournament
 	 * and return the one with the lower fitness, assuming the population
@@ -107,7 +50,7 @@ public class PopulationFunctions {
 	 * @return The winner tree
 	 */
 	static boolean smallerIsBetter = fitnessType > 0;
-	static Tree tournament(Tree [] population, int tournamentSize) {
+	public static Tree tournament(Tree [] population, int tournamentSize) {
 		int pick = Mat.random(tournamentSize);
 		for(int i = 1; i < tournamentSize; i ++){
 			if(smallerIsBetter)
@@ -127,7 +70,7 @@ public class PopulationFunctions {
 	 * @param p2 Parent 2
 	 * @return Descendent of p1 and p2 through crossover
 	 */
-	static Tree[] crossover(Tree[] pop, int tournamentSize, double [][] data, String [] target, double trainFraction) {
+	public static Tree[] crossover(Tree[] pop, int tournamentSize, double [][] data, String [] target, double trainFraction) {
 		Tree p1 = tournament(pop, tournamentSize);
 		Tree p2 = tournament(pop, tournamentSize);
 		return TreeCrossoverHandler.crossover(p1, p2,data, target, trainFraction);
@@ -149,9 +92,15 @@ public class PopulationFunctions {
 
 
 	public static Tree prun(Tree tree, double[][] data, String[] target, double trainFraction) {
+		double [] goa = tree.getGOA();
+		int [] goac = tree.getGOAC();
+		
 		Tree t = TreePruningHandler.prun(tree, data, target, trainFraction);
 		for ( int i = 0; i < Math.sqrt(tree.getDimensions().size())+1; i++)
 			t = TreePruningHandler.prun(t, data, target, trainFraction);
+		
+		t.setGOA(goa);
+		t.setGOAC(goac);
 		return t;
 	}
 

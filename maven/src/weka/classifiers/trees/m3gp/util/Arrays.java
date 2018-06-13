@@ -194,4 +194,35 @@ public class Arrays {
 		}
 		return predict;
 	}
+
+	public static String arrayToString(int[] v) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("[" + v[0]);
+		for(int i = 1; i < v.length; i++) {
+			sb.append(", " + v[i]);
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+
+
+	public static String arrayToString(double[] v) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("[" + v[0]);
+		for(int i = 1; i < v.length; i++) {
+			sb.append(", " + v[i]);
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+
+	public static double[] multiply(int[] v, double d) {
+		int n = v.length;
+		double[] ret = new double[n];
+		for(int i = 0; i < n; i++) {
+			ret[i] = v[i]*d;
+		}
+		return ret;
+	}
+
 }

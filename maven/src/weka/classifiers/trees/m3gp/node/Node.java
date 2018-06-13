@@ -224,4 +224,20 @@ public class Node implements Serializable{
 			}
 		}
 	}
+	
+	public void turnTerminal(String[] term) {
+		l = null;
+		r = null;
+		int index = Mat.random(term.length);
+		v = index < term.length-1? index :Math.random();
+	}
+	
+	public void changeValue(String[] op, String[] term) {
+		if( isLeaf()){
+			int index = Mat.random(term.length);
+			v = index < term.length-1? index :Math.random();
+		}else{
+			v = Mat.random(op.length);
+		}
+	}
 }

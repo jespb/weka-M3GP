@@ -20,6 +20,9 @@ public class Tree implements Serializable{
 	public static String[] operations;
 	public static int trainSize;
 
+	private double[] goAffinity; // Probabilidades de cada genetic operator
+	private int[] goAffinityCount; // Nr de vezes que cada GO foi usado
+	
 	private ArrayList<Node> dimensions;
 
 	private ArrayList<double[][]> covarianceMatrix = null;
@@ -41,10 +44,57 @@ public class Tree implements Serializable{
 		dimensions = new ArrayList<Node>();
 		dimensions.add(new Node(op, term, t_rate,depth));
 		operations = op;
+		
+		goAffinity = new double [TreeGeneticOperatorHandler.numberOfGeneticOperators];
+		goAffinityCount = new int [TreeGeneticOperatorHandler.numberOfGeneticOperators];
+		for (int i = 0; i < goAffinity.length; i++){
+			goAffinity[i]=1;
+		}
+	}
+	
+
+	public double[] getGOA(){
+		return goAffinity;
+	}
+
+	public int[] getGOAC(){
+		return goAffinityCount;
+	}
+	
+	public void setGOA(double [] goa) {
+		goAffinity = goa;
+	}
+	
+	public void setGOAC(int [] goac) {
+		goAffinityCount = goac;
+	}
+
+	public void incGOA(int operation) {
+		goAffinity[operation] *= 1.1;
+		goAffinityCount[operation] ++;
+	}
+
+	public void decGOA(int operation) {
+		goAffinity[operation] /= 1.1;
+		goAffinityCount[operation] ++;
 	}
 
 	public Tree(ArrayList<Node> dim) {
 		dimensions = dim;
+	}
+	
+
+	public Tree(ArrayList<Node> dim, double [] goa, int [] goac) {
+		dimensions = dim;
+
+		if(goa != null){
+			goAffinity = new double[goa.length];
+			goAffinityCount = new int[goa.length];
+			for(int i = 0; i < goa.length; i++){
+				goAffinity[i] = goa[i];
+				goAffinityCount[i] = goac[i];
+			}
+		}
 	}
 
 	/**
@@ -174,6 +224,11 @@ public class Tree implements Serializable{
 		StringBuilder sb = new StringBuilder();
 		sb.append(toString()+",\n");
 
+		//goAffinity
+		sb.append("            \"GOA\":"+ Arrays.arrayToString(goAffinity) + ",\n");
+		sb.append("            \"GOAC\":"+ Arrays.arrayToString(goAffinityCount) + ",\n");
+
+		
 		//pontos treino
 		sb.append("            \"Train\":[\n");
 		for(int i = 0; i < (int)(data.length*trainFraction); i++) {
