@@ -2,6 +2,8 @@ package weka.classifiers.trees.m3gp.population;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import weka.classifiers.trees.m3gp.client.ClientWekaSim;
 import weka.classifiers.trees.m3gp.tree.Tree;
@@ -145,13 +147,21 @@ public class Population{
 		Tree [] nextGen = new Tree [population.length];
 		double [] fitnesses = new double[population.length];
 
+		
+		
+		
 		// Obtencao de fitness
 		long timeFitness = System.currentTimeMillis();
-		for (int i = 0; i < population.length; i++){
-			fitnesses[i] = PopulationFunctions.fitnessTrain(population[i],data, target,trainFraction);
+		ExecutorService pool = Executors.newFixedThreadPool(5);	
+		for (int i = 0; i < population.length; i++) {
+			pool.submit(new FitnessCalculator(fitnesses, i, population[i]));
 		}
+		pool.shutdown();
+		while(!pool.isTerminated());
+		
 		timeFitness = System.currentTimeMillis()-timeFitness;
 
+		
 		Arrays.mergeSortBy(population, fitnesses);
 		
 		long timeFile = System.currentTimeMillis();
@@ -291,6 +301,22 @@ public class Population{
 	
 	private Tree prun(Tree tree, double[][] data, String[] target, double trainFraction) {
 		return PopulationFunctions.prun(tree,data,target,trainFraction);
+	}
+	
+	private class FitnessCalculator implements Runnable{
+		double [] fit;
+		int index;
+		Tree t;
+		
+		public FitnessCalculator(double [] fit, int index, Tree t) {
+			this.fit = fit;
+			this.index = index;
+			this.t= t;
+		}
+		
+		public void run() {
+			fit[index] = PopulationFunctions.fitnessTrain(t,data, target,trainFraction);
+		}
 	}
 
 }

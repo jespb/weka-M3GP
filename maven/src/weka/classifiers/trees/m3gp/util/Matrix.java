@@ -464,4 +464,18 @@ public class Matrix {
 
 		return det;
 	}
+
+	public static void printMatrix(int[][] m) {
+		StringBuilder sb = new StringBuilder();
+		for(int y = 0; y < m.length; y++) {
+			for(int x = 0; x < m[0].length; x++) {
+				sb.append(m[y][x]+"," );
+				for(int i = (m[y][x]+"").length(); i < 3; i++) {
+					sb.append(" ");
+				}
+			}
+			sb.append("\n");
+		}
+		System.out.println(sb);
+	}
 }

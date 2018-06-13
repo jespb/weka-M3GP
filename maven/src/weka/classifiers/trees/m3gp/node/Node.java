@@ -47,7 +47,10 @@ public class Node implements Serializable{
 	 * @param depth
 	 */
 	public Node(String [] op, String [] term, double t_rate, int depth){
-		if(Math.random() < t_rate || depth <= 1){
+		if(
+				Math.random() * (op.length + term.length + 1)< op.length +1 
+				//Math.random()< t_rate 
+				|| depth <= 1){
 			int index = Mat.random(term.length);
 			v = index < term.length-1? index :Math.random();
 		}else{

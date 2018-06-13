@@ -16,7 +16,7 @@ public class PopulationFunctions {
 	 * -5 : accuracy - sigmoid(#nodes)/trainset_size
 	 * -6 : sigmoid(rms mhlnb dist between clusters) - sigmoin(mean distance of points to the centroids)
 	 */
-	static int fitnessType = -5;
+	static int fitnessType = -4;
 	public static double fitnessTrain(Tree t, double [][] data, String [] target, double trainFraction) {
 		double d = 0,acc,dist_ce,d_size, dist_cl;
 		switch (fitnessType){
@@ -49,13 +49,13 @@ public class PopulationFunctions {
 			d = acc - d_size/(data.length*trainFraction);
 			break;
 		case -6:
-			dist_cl = Mat.sigmod(t.getMeanDistanceBetweenCentroids(data, target, trainFraction)/t.getDimensions().size());
-			dist_ce = Mat.sigmod(t.getTrainRootMeanSquaredMHLNBDistanceToCentroid(data, target, trainFraction)/t.getDimensions().size()); 
+			dist_cl = Mat.sigmod(t.getMeanDistanceBetweenCentroids(data, target, trainFraction)/Math.sqrt(t.getDimensions().size()));
+			dist_ce = Mat.sigmod(t.getTrainRootMeanSquaredMHLNBDistanceToCentroid(data, target, trainFraction)/Math.sqrt(t.getDimensions().size())); 
 			d = dist_cl-dist_ce;
 		case -7:
-			dist_cl = t.getMeanManhattanDistanceBetweenCentroids(data, target, trainFraction) / t.getDimensions().size();
-			dist_ce = t.getMeanManhattanDistanceToCentroids(data, target, trainFraction) / t.getDimensions().size();
-			d = dist_cl - dist_ce;
+			dist_cl = t.getMeanDistanceBetweenCentroids(data, target, trainFraction)/Math.sqrt(t.getDimensions().size());
+			dist_ce = t.getTrainRootMeanSquaredDistanceToCentroid(data, target, trainFraction)/Math.sqrt(t.getDimensions().size()); 
+			d = dist_cl-dist_ce;
 		}
 		return d;		
 	}
