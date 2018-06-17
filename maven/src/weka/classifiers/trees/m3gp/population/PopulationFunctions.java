@@ -107,6 +107,6 @@ public class PopulationFunctions {
 	public static boolean betterTrain(Tree t1, Tree t2, double[][] data, String[] target, double trainFract) {
 		double t1_fit = fitnessTrain(t1,data,target,trainFract);
 		double t2_fit = fitnessTrain(t2,data,target,trainFract);
-		return smallerIsBetter? t1_fit <= t2_fit : t1_fit >= t2_fit; 
+		return smallerIsBetter? t1_fit < t2_fit : t1_fit > t2_fit; 
 	}
 }

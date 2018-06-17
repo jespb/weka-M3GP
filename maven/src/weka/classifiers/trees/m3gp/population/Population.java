@@ -164,7 +164,7 @@ public class Population{
 		
 		// Obtencao de fitness
 		long timeFitness = System.currentTimeMillis();
-		ExecutorService pool = Executors.newFixedThreadPool(5);	
+		ExecutorService pool = Executors.newFixedThreadPool(10);	
 		for (int i = 0; i < population.length; i++) {
 			pool.submit(new FitnessCalculator(fitnesses, i, population[i]));
 		}
