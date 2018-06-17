@@ -8,7 +8,7 @@ import weka.classifiers.trees.m3gp.population.PopulationFunctions;
 import weka.classifiers.trees.m3gp.util.Mat;
 
 public class TreeGeneticOperatorHandler {
-	public static int numberOfGeneticOperators = 5;
+	public static int numberOfGeneticOperators = 10;
 
 	public static Tree[] geneticOperation(Tree[] population, int tournamentSize, String[] op, String[] term, 
 			double t_rate, int max_depth, double [][] data, String [] target, double train_p){

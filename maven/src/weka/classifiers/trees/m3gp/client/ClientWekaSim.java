@@ -35,7 +35,7 @@ public class ClientWekaSim {
 
 	private static int numberOfGenerations = 100;
 	private static int initialRun_ID =0;
-	private static int numberOfRuns = 1;
+	private static int numberOfRuns = 30;
 	private static int populationSize = (int)(500 / speed);
 	private static int maxDepth = 6;
 
@@ -71,7 +71,7 @@ public class ClientWekaSim {
 			initialRun_ID=Integer.parseInt(args[1]);
 		}
 
-		
+		/*
 		init();
 
 		long time = System.currentTimeMillis();
@@ -79,7 +79,7 @@ public class ClientWekaSim {
 			run(run + initialRun_ID);
 		}
 		System.out.println((System.currentTimeMillis() - time) + "ms");
-		/*
+		*/
 		
 		for( String file : filenames) {
 			System.out.println("RUNNING FILE: " + file);
@@ -93,7 +93,7 @@ public class ClientWekaSim {
 				run(run + initialRun_ID);
 			}
 			System.out.println((System.currentTimeMillis() - time) + "ms");
-		}*/
+		}
 	}
 
 	/**
