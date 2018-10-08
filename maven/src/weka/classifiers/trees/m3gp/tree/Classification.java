@@ -3,7 +3,7 @@ package weka.classifiers.trees.m3gp.tree;
 import weka.classifiers.trees.m3gp.util.Arrays;
 
 public class Classification {
-	private static int method = 2;
+	private static int method = 1;
 	
 	public static String predict(Tree t, double[] d, int method) {
 		String p = null;

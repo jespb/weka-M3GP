@@ -19,7 +19,7 @@ public class ClientWekaSim {
 
 	private static int file = 7; // ST, GS
 
-	private static String[] filenames = "heart.csv mcd3.csv mcd10.csv movl.csv seg.csv vowel.csv wav.csv yeast.csv".split(" ");
+	private static String[] filenames = "heart.csv mcd3.csv mcd10.csv movl.csv seg.csv vowel.csv yeast.csv wav.csv".split(" ");
 	private static String filename = filenames[file];
 	private static String datasetFilename = "datasets" + File.separator + filename;
 	private static String treeType = "Full";
@@ -112,8 +112,8 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	private static void run(int run) throws IOException{
-		System.out.println("Run " + run + ":");
-		datafile = new BufferedWriter(new FileWriter("Run_"+run+"_"+filename.split("[.]")[0]+".json"));
+		System.out.println("Run " + run + "("+filename.split("[.]")[0]+"):");
+		datafile = new BufferedWriter(new FileWriter("Rrun_"+run+"_"+filename.split("[.]")[0]+".json"));
 		datafile.write("{\n    \"generations\": [{\n");
 
 		if(shuffleDataset)Arrays.shuffle(data, target);

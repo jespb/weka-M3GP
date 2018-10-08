@@ -70,12 +70,14 @@ public class Tree implements Serializable{
 	}
 
 	public void incGOA(int operation) {
-		goAffinity[operation] *= 1.1;
+		goAffinity[operation] += 1.10;
 		goAffinityCount[operation] ++;
 	}
 
 	public void decGOA(int operation) {
-		goAffinity[operation] /= 1.1;
+		goAffinity[operation] /= 1.05;
+		if(goAffinity[operation]<0.1)	
+			goAffinity[operation] = 0.1;
 		goAffinityCount[operation] ++;
 	}
 

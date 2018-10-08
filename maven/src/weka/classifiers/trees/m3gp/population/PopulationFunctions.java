@@ -16,7 +16,7 @@ public class PopulationFunctions {
 	 * -5 : accuracy - sigmoid(#nodes)/trainset_size
 	 * -6 : sigmoid(rms mhlnb dist between clusters) - sigmoin(mean distance of points to the centroids)
 	 */
-	static int fitnessType = -4;
+	static int fitnessType = -5;
 	public static double fitnessTrain(Tree t, double [][] data, String [] target, double trainFraction) {
 		double d = 0,acc,dist_ce,d_size, dist_cl;
 		switch (fitnessType){		
