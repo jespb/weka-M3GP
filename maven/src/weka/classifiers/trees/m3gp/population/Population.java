@@ -46,6 +46,8 @@ public class Population{
 
 	//from the trees with the best train rmse over the generations, this is the one with the lower test rmse
 	private Tree bestTree = null;
+	
+	public static double[] goAffinity;
 
 	/**
 	 * Construtor
@@ -65,6 +67,7 @@ public class Population{
 			String populationType, int maxGeneration, double tournamentFraction,
 			double elitismFraction) throws IOException{
 		message("Creating forest...");
+		resetGOAffinity();
 
 		tournamentSize = (int) (tournamentFraction * populationSize);
 		elitismSize = (int) (elitismFraction * populationSize);
@@ -99,7 +102,12 @@ public class Population{
 		
 		Tree.trainSize = (int)(target.length * trainFraction);		
 	}
-	
+	public void resetGOAffinity() {
+		goAffinity = new double[TreeGeneticOperatorHandler.numberOfGeneticOperators];
+		for(int i = 0; i < goAffinity.length; i++) {
+			goAffinity[i] = 1;
+		}
+	}
 	public int[] calcGOAC() {
 		int [] goac = new int [population[0].getGOAC().length];
 		for(Tree t: population) {
@@ -237,7 +245,7 @@ public class Population{
 		double train = bestTree.getTrainAccuracy(data, target, trainFraction);
 		double test = bestTree.getTestAccuracy(data, target, trainFraction);
 		
-		System.out.println(generation + ": " + train + " // " + test + "///" + Arrays.arrayToString(calcGOAC()));
+		System.out.println(generation + ": " + train + " // " + test + "///" + Arrays.arrayToString(goAffinity));
 		
 		population = nextGen;
 		

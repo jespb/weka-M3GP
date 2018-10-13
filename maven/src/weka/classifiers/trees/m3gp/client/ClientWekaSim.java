@@ -17,7 +17,7 @@ import weka.classifiers.trees.m3gp.util.Data;
  */
 public class ClientWekaSim {
 
-	private static int file = 7; // ST, GS
+	private static int file = 1; // ST, GS
 
 	private static String[] filenames = "heart.csv mcd3.csv mcd10.csv movl.csv seg.csv vowel.csv yeast.csv wav.csv".split(" ");
 	private static String filename = filenames[file];
@@ -71,7 +71,7 @@ public class ClientWekaSim {
 			initialRun_ID=Integer.parseInt(args[1]);
 		}
 
-		/*
+		
 		init();
 
 		long time = System.currentTimeMillis();
@@ -79,8 +79,8 @@ public class ClientWekaSim {
 			run(run + initialRun_ID);
 		}
 		System.out.println((System.currentTimeMillis() - time) + "ms");
-		*/
 		
+		/*
 		for( String file : filenames) {
 			System.out.println("RUNNING FILE: " + file);
 			filename = file;
@@ -94,6 +94,7 @@ public class ClientWekaSim {
 			}
 			System.out.println((System.currentTimeMillis() - time) + "ms");
 		}
+		*/
 	}
 
 	/**

@@ -4,59 +4,79 @@ import java.util.ArrayList;
 
 import weka.classifiers.trees.m3gp.node.Node;
 import weka.classifiers.trees.m3gp.node.NodeHandler;
+import weka.classifiers.trees.m3gp.population.Population;
 import weka.classifiers.trees.m3gp.population.PopulationFunctions;
 import weka.classifiers.trees.m3gp.util.Mat;
 
 public class TreeGeneticOperatorHandler {
-	public static int numberOfGeneticOperators = 10;
+	public static int numberOfGeneticOperators = 5;
 
 	public static Tree[] geneticOperation(Tree[] population, int tournamentSize, String[] op, String[] term, 
 			double t_rate, int max_depth, double [][] data, String [] target, double train_p){
-		Tree t1 = PopulationFunctions.tournament(population, tournamentSize);
-		Tree t2 = PopulationFunctions.tournament(population, tournamentSize);
-		Tree t3 = PopulationFunctions.tournament(population, tournamentSize);
+		Tree[] p = new Tree[3];
+		p[0] = PopulationFunctions.tournament(population, tournamentSize);
+		p[1] = PopulationFunctions.tournament(population, tournamentSize);
+		p[2] = PopulationFunctions.tournament(population, tournamentSize);
 
-		int operation = roulette(t1.getGOA());
+		int operation = roulette(p[0].getGOA());
 
 		Tree [] desc = null;
 		switch(operation){
 		case 0:
-			desc = crossover1(t1, t2, data, target, train_p);
+			desc = crossover1(p[0], p[1], data, target, train_p);
 			break;
 		case 1:
-			desc = crossover2(t1, t2, data, target, train_p);
+			desc = crossover2(p[0], p[1], data, target, train_p);
 			break;
 		case 2:
-			desc = mutation1(t1, op, term, t_rate, max_depth, data, target, train_p);
+			desc = mutation1(p[0], op, term, t_rate, max_depth, data, target, train_p);
 			break;
 		case 3:
-			desc = mutation2(t1, op, term, t_rate, max_depth, data, target, train_p);
+			desc = mutation2(p[0], op, term, t_rate, max_depth, data, target, train_p);
 			break;
 		case 4:
-			desc = mutation3(t1, op, term, t_rate, max_depth, data, target, train_p);
+			desc = mutation3(p[0], op, term, t_rate, max_depth, data, target, train_p);
 			break;
 		case 5:
-			desc = mutation4(t1, op, term);
+			desc = mutation4(p[0], op, term);
 			break;
 		case 6:
-			desc = mutation5(t1,term);
+			desc = mutation5(p[0],term);
 			break;
 		case 7:
-			desc = mutation6(t1,term);
+			desc = mutation6(p[0],term);
 			break;
 		case 8:
-			desc = mutation7(t1,term);
+			desc = mutation7(p[0],term);
 			break;
 		case 9:
-			desc = crossover3(t1,t2,t3,data,target,train_p);
+			desc = crossover3(p[0],p[1],p[2],data,target,train_p);
 		}
 
 
 		for( Tree t : desc){
 			PopulationFunctions.fitnessTrain(t, data, target, train_p);
 		}
+		
+		double parents = 0;
+		double descendents = 0;
+		
+		for(int i = 0; i < desc.length; i++) {
+			parents += PopulationFunctions.fitnessTrain(p[i], data, target, train_p);
+			descendents += PopulationFunctions.fitnessTrain(desc[i], data, target, train_p);
+		}
+		
+		if(descendents > parents) {
+			Population.goAffinity[operation]+=0.1;
+			if(Population.goAffinity[operation] > 5)
+				Population.goAffinity[operation] = 5;
+		}else {
+			Population.goAffinity[operation]*=0.95;
+			if(Population.goAffinity[operation] < 0.1)
+				Population.goAffinity[operation] = 0.1;
+		}
 
-
+		/*
 		if ( PopulationFunctions.betterTrain(desc[0], t1, data, target, train_p)){
 			desc[0].incGOA(operation);
 		}else{
@@ -77,6 +97,7 @@ public class TreeGeneticOperatorHandler {
 				}
 			}
 		}
+		*/
 
 		return desc;
 	}

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 import weka.classifiers.trees.m3gp.node.Node;
+import weka.classifiers.trees.m3gp.population.Population;
 import weka.classifiers.trees.m3gp.util.Arrays;
 import weka.classifiers.trees.m3gp.util.Matrix;
 
@@ -54,7 +55,7 @@ public class Tree implements Serializable{
 	
 
 	public double[] getGOA(){
-		return goAffinity;
+		return Population.goAffinity; //goAffinity;
 	}
 
 	public int[] getGOAC(){
@@ -221,13 +222,14 @@ public class Tree implements Serializable{
 		}
 		return ret;
 	}
+	
 
 	public String toJSON(double[][] data, String[] target, double trainFraction) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(toString()+",\n");
 
 		//goAffinity
-		sb.append("            \"GOA\":"+ Arrays.arrayToString(goAffinity) + ",\n");
+		sb.append("            \"GOA\":"+ Arrays.arrayToString(getGOA()) + ",\n");
 		sb.append("            \"GOAC\":"+ Arrays.arrayToString(goAffinityCount) + ",\n");
 
 		
