@@ -20,6 +20,8 @@ public class Population{
 
 	// current and max generation
 	public static int generation = 0;
+
+	public static double[] goAffinity;
 	private int maxGeneration = 10;
 
 	// population
@@ -47,7 +49,7 @@ public class Population{
 	//from the trees with the best train rmse over the generations, this is the one with the lower test rmse
 	private Tree bestTree = null;
 	
-	public static double[] goAffinity;
+	//public static double[] goAffinity;
 
 	/**
 	 * Construtor
@@ -102,21 +104,28 @@ public class Population{
 		
 		Tree.trainSize = (int)(target.length * trainFraction);		
 	}
-	public void resetGOAffinity() {
-		goAffinity = new double[TreeGeneticOperatorHandler.numberOfGeneticOperators];
+	
+	private void resetGOAffinity() {
+		goAffinity = new double[5];
 		for(int i = 0; i < goAffinity.length; i++) {
-			goAffinity[i] = 1;
+			goAffinity[i] = 1.0/goAffinity.length;
 		}
 	}
-	public int[] calcGOAC() {
-		int [] goac = new int [population[0].getGOAC().length];
-		for(Tree t: population) {
-			for (int i = 0; i < goac.length; i++) {
-				goac[i] += t.getGOAC()[i];
+	
+	private double[] medianGOA() {
+		double[][] ret = new double [population[0].getGOA().length][population.length];
+		for(int i = 0; i < population.length; i++) {
+			for(int k = 0; k < population[i].getGOA().length; k++) {
+				ret[k][i] = population[i].getGOA()[k];
 			}
 		}
-		return goac;
+		double [] median = new double[population[0].getGOA().length];
+		for(int i = 0; i < median.length; i++) {
+			median[i] = Arrays.median(ret[i]);
+		}
+		return median;
 	}
+	
 
 	/**
 	 * Trains the classifier
@@ -126,7 +135,7 @@ public class Population{
 
 		generation = 0;
 		while(improving()){
-			ClientWekaSim.datafile.write("        \"GOAC\":\"" + Arrays.arrayToString(Arrays.multiply(calcGOAC(), 1.0/(generation+1)))  + "\"\n");
+			ClientWekaSim.datafile.write("        \"MedianGOA\":\"" + Arrays.arrayToString(medianGOA())  + "\"\n");
 			ClientWekaSim.datafile.write("        \"Individuals\":{\n");
 			
 			if(generation%5 == 0)
@@ -137,8 +146,10 @@ public class Population{
 			
 			ClientWekaSim.datafile.write("        }\n");
 			if(improving())
-				ClientWekaSim.datafile.write(",");
+				ClientWekaSim.datafile.write(",\n");
 		}
+		bestTree = prun(bestTree, data, target, trainFraction);
+		
 		return null;
 	}
 
@@ -168,11 +179,12 @@ public class Population{
 		double [] fitnesses = new double[population.length];
 
 		
+		//resetGOAffinity();
 		
 		
 		// Obtencao de fitness
 		long timeFitness = System.currentTimeMillis();
-		ExecutorService pool = Executors.newFixedThreadPool(20);	
+		ExecutorService pool = Executors.newFixedThreadPool(3);	
 		for (int i = 0; i < population.length; i++) {
 			pool.submit(new FitnessCalculator(fitnesses, i, population[i]));
 		}
@@ -185,7 +197,6 @@ public class Population{
 		Arrays.mergeSortBy(population, fitnesses);
 		
 		long timeFile = System.currentTimeMillis();
-		ClientWekaSim.datafile.write(population[population.length-1].toJSON(data, target, trainFraction)+"\n");
 		timeFile = System.currentTimeMillis()-timeFile;
 		//ClientWekaSim.datafile.addGen(nextGen);
 		
@@ -203,38 +214,19 @@ public class Population{
 		//Selecao e reproducao
 
 		long timeSelectAndCross = System.currentTimeMillis();
-		Tree[] cross;
+		
 		for(int i = 1+elitismSize; i < nextGen.length; i++){
-			cross = TreeGeneticOperatorHandler.geneticOperation(population, tournamentSize, operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
+			Tree [] cross = TreeGeneticOperatorHandler.geneticOperation(population, tournamentSize, operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
 			for(int k = 0; k < cross.length && k+i < population.length; k++){
 				nextGen[i+k]=cross[k];
 			}
 			i+=cross.length-1;
-			/*
-			if(Math.random() < 0.50) {//TODO default = 0.50
-				cross = crossover(population);
-				if(cross[0].getDepth() <= 17) {
-					nextGen[i] = cross[0];	
-				}else {
-					i--;
-				}
-				if(i+1 < nextGen.length) {
-					if(cross[1].getDepth()<=17) {
-						nextGen[i+1] = cross[1];
-					}else {
-						i--;
-					}
-				}
-				i++;
-			}else {
-				nextGen[i] = mutation(population);
-				if (nextGen[i].getDepth() > 17) {
-					i --;
-				}
-			}
-			*/
 		}
+
+		
+		
 		timeSelectAndCross = System.currentTimeMillis()-timeSelectAndCross;
+		ClientWekaSim.datafile.write(population[population.length-1].toJSON(data, target, trainFraction)+"\n");
 		
 		if(elitismSize == 0) {
 			setBestToLast(population);
@@ -245,7 +237,7 @@ public class Population{
 		double train = bestTree.getTrainAccuracy(data, target, trainFraction);
 		double test = bestTree.getTestAccuracy(data, target, trainFraction);
 		
-		System.out.println(generation + ": " + train + " // " + test + "///" + Arrays.arrayToString(goAffinity));
+		System.out.println(generation + ": " + train + " // " + test + "///" + Arrays.arrayToString(bestTree.getGOA()));
 		
 		population = nextGen;
 		
@@ -303,28 +295,6 @@ public class Population{
 			return bestTree.toString();
 	}
 	
-	/**
-	 * This method creates as many trees as the size of the tournament
-	 * which are descendents of p1 and p2 through crossover and returns
-	 * the smallest one
-	 * @param p1 Parent 1
-	 * @param p2 Parent 2
-	 * @return Descendent of p1 and p2 through crossover
-	 */
-	private Tree[] crossover(Tree[] population) {
-			return PopulationFunctions.crossover(population, tournamentSize,data, target, trainFraction);
-	}
-	
-	/**
-	 * This method creates as many trees as the size of the tournament
-	 * which are descendents from p through mutation and returns the 
-	 * smallest one
-	 * @param p Original Tree
-	 * @return Descendent of p by mutation
-	 */
-	private Tree mutation(Tree[] population) {
-		return PopulationFunctions.mutation(population, tournamentSize, operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
-	}
 	
 	private Tree prun(Tree tree, double[][] data, String[] target, double trainFraction) {
 		return PopulationFunctions.prun(tree,data,target,trainFraction);

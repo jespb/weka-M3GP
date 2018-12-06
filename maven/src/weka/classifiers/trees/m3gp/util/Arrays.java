@@ -225,4 +225,39 @@ public class Arrays {
 		return ret;
 	}
 
+	public static double[] normalize(double[] np) {
+		double acc = 0;
+		for(double d : np) {
+			acc += d;
+		}
+		double [] ret = new double [np.length];
+		for(int i = 0; i < np.length; i++) {
+			ret[i] = np[i]/acc;
+		}
+		return ret;
+	}
+
+	public static double sumvals(double[] d) {
+		double acc = 0;
+		for (double i : d)
+			acc += i;
+		return acc;
+	}
+	
+	public static double[] copy(double[]d) {
+		double[] ret = new double[d.length];
+		for(int i = 0; i < d.length; i++) {
+			ret[i]=d[i];
+		}
+			return ret;
+	}
+
+	public static double median(double[] ds) {
+		java.util.Arrays.sort(ds);
+		if (ds.length %2 != 0)
+		return ds[ds.length/2];
+		else
+			return (ds[ds.length/2]+ds[ds.length/2 -1])/2.0;
+	}
+
 }

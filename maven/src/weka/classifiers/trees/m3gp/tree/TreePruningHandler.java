@@ -17,7 +17,7 @@ public class TreePruningHandler {
 			ArrayList<Node> newDim = t.cloneDimensions();
 			newDim.remove(i);
 			candidate = new Tree(newDim);
-			if(PopulationFunctions.betterTrain(candidate, t, data, target, trainFract)) {
+			if(PopulationFunctions.betterOrEqualTrain(candidate, t, data, target, trainFract)) {
 				t = candidate;
 				i--;
 			}

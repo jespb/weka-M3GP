@@ -6,6 +6,7 @@ import weka.classifiers.trees.m3gp.node.Node;
 import weka.classifiers.trees.m3gp.node.NodeHandler;
 import weka.classifiers.trees.m3gp.population.Population;
 import weka.classifiers.trees.m3gp.population.PopulationFunctions;
+import weka.classifiers.trees.m3gp.util.Arrays;
 import weka.classifiers.trees.m3gp.util.Mat;
 
 public class TreeGeneticOperatorHandler {
@@ -57,49 +58,112 @@ public class TreeGeneticOperatorHandler {
 		for( Tree t : desc){
 			PopulationFunctions.fitnessTrain(t, data, target, train_p);
 		}
-		
+
 		double parents = 0;
-		double descendents = 0;
-		
+
 		for(int i = 0; i < desc.length; i++) {
 			parents += PopulationFunctions.fitnessTrain(p[i], data, target, train_p);
-			descendents += PopulationFunctions.fitnessTrain(desc[i], data, target, train_p);
 		}
-		
-		if(descendents > parents) {
-			Population.goAffinity[operation]+=0.1;
-			if(Population.goAffinity[operation] > 5)
-				Population.goAffinity[operation] = 5;
-		}else {
-			Population.goAffinity[operation]*=0.95;
-			if(Population.goAffinity[operation] < 0.1)
-				Population.goAffinity[operation] = 0.1;
-		}
+		parents /= desc.length;
 
-		/*
-		if ( PopulationFunctions.betterTrain(desc[0], t1, data, target, train_p)){
-			desc[0].incGOA(operation);
-		}else{
-			desc[0].decGOA(operation);
-		}
 
-		if(desc.length > 1){
-			if(PopulationFunctions.betterTrain(desc[1], t2, data, target, train_p)){
-				desc[1].incGOA(operation);
-			}else{
-				desc[1].decGOA(operation);
+		double perc = 0.99;
+
+		int modo = 1; // 0 = n vector SARA, 1 = n vector EU , 3 = 1 vector EU
+		modo += (Tree.MULTI_VECTOR ? 0:2);
+		switch(modo) {
+		case 0:
+			for(int i = 0; i < desc.length; i++) {
+				if ( PopulationFunctions.fitnessTrain(desc[i], data, target, train_p) > parents) {
+					desc[i].getGOA()[operation] = 1 - ( (1 - desc[i].getGOA()[operation]) * perc );
+				}else {
+					desc[i].getGOA()[operation] *= perc;
+				}
+
+				double [] np = new double [desc[i].getGOA().length];
+				int acc = 0;
+				int count = 0;
+				for (int ii = 0; ii < np.length; ii++) {
+					if( desc[i].getGOA()[ii] >= 0.05) {
+						np[ii] = desc[i].getGOA()[ii];
+						acc += desc[i].getGOA()[ii];
+					}else {
+						count++;
+					}
+				}
+				for(int ii = 0; ii < np.length; ii++) {
+					if (np[ii] == 0){
+						np[ii] = (0.05 * acc) / (np.length - 0.05 * count);
+					}
+				}
+				desc[i].setGOA( Arrays.normalize(cleanAndNormalize(np)) );
 			}
-			if(desc.length > 2){
-				if(PopulationFunctions.betterTrain(desc[2], t3, data, target, train_p)){
-					desc[2].incGOA(operation);
-				}else{
-					desc[2].decGOA(operation);
+			break;
+			
+			
+		case 1:
+			for(int i = 0; i < desc.length; i++) {
+				if ( PopulationFunctions.fitnessTrain(desc[i], data, target, train_p) > parents) {
+					desc[i].incGOA(operation);
+				}else {
+					desc[i].decGOA(operation);
 				}
 			}
+			break;
+			
+		case 3:
+			for(int i = 0; i < desc.length; i++) {
+				if ( PopulationFunctions.fitnessTrain(desc[i], data, target, train_p) > parents) {
+					Population.goAffinity[operation] = 1 - ( (1 - Population.goAffinity[operation]) * perc );
+				}else {
+					Population.goAffinity[operation] *= perc;
+				}
+
+				double [] np = Population.goAffinity;
+				for(int ii = 0; ii< np.length; ii++) {
+					np[ii] -=0.05;
+					if(np[ii] < 0) {
+						np[ii] = 0;
+					}
+				}
+				Population.goAffinity = Arrays.normalize(np);
+				np = Population.goAffinity;
+				for(int ii = 0; ii< np.length; ii++) {
+					np[ii] *= 1-0.05*np.length;
+					np[ii] += 0.05;
+				}
+			}
+			break;
 		}
-		*/
 
 		return desc;
+	}
+
+	/**
+	 * Metodo da sara
+	 * @param d
+	 * @return
+	 */
+	public static double[] cleanAndNormalize(double [] d) {
+		double [] np = new double [d.length];
+		double acc = 0;
+		double count = 0;
+		double min = 0.05;
+		for (int i = 0; i < np.length; i++) {
+			if( d[i] >= min) {
+				np[i] = d[i];
+				acc += d[i];
+			}else {
+				count++;
+			}
+		}
+		for(int i = 0; i < np.length; i++) {
+			if (np[i] == 0){
+				np[i] = (min * acc) / (np.length - min * count);
+			}
+		}
+		return Arrays.normalize(np);
+
 	}
 
 
@@ -113,7 +177,7 @@ public class TreeGeneticOperatorHandler {
 
 		r1.changeValue(op, term);
 
-		return new Tree[] {new Tree(dim1, t1.getGOA(), t1.getGOAC())};
+		return new Tree[] {new Tree(dim1, t1.getGOA())};
 	}
 
 	private static Tree[] mutation5(Tree t1, String[] term) {
@@ -126,7 +190,7 @@ public class TreeGeneticOperatorHandler {
 
 		r1.turnTerminal(term);
 
-		return new Tree[] {new Tree(dim1, t1.getGOA(), t1.getGOAC())};
+		return new Tree[] {new Tree(dim1, t1.getGOA())};
 	}
 
 	private static Tree[] mutation6(Tree t1, String[] term) {
@@ -137,12 +201,12 @@ public class TreeGeneticOperatorHandler {
 
 		n.turnTerminal(term);
 
-		return new Tree[] {new Tree(dim1, t1.getGOA(), t1.getGOAC())};
+		return new Tree[] {new Tree(dim1, t1.getGOA())};
 	}
-	
+
 	private static Tree[] mutation7(Tree t1, String[] term) {
 		ArrayList<Node> dim1 = t1.cloneDimensions();
-		
+
 		while (dim1.size() > 1){
 			dim1.remove(1);
 		}
@@ -151,7 +215,7 @@ public class TreeGeneticOperatorHandler {
 
 		n.turnTerminal(term);
 
-		return new Tree[] {new Tree(dim1, t1.getGOA(), t1.getGOAC())};
+		return new Tree[] {new Tree(dim1, t1.getGOA())};
 	}
 
 
@@ -165,7 +229,7 @@ public class TreeGeneticOperatorHandler {
 		dim1.set(index1, dim2.get(index2));
 		dim2.set(index2, n);
 
-		return new Tree[] {new Tree(dim1, t1.getGOA(), t1.getGOAC()), new Tree(dim2, t2.getGOA(), t2.getGOAC())};
+		return new Tree[] {new Tree(dim1, t1.getGOA()), new Tree(dim2, t2.getGOA())};
 	}
 
 	public static Tree[] crossover2(Tree t1, Tree t2, double[][] data, String[] target, double train_p){
@@ -178,9 +242,9 @@ public class TreeGeneticOperatorHandler {
 		Node r2 = NodeHandler.randomNode(p2);
 		NodeHandler.swap(r1,r2);
 
-		return new Tree[] {new Tree(dim1, t1.getGOA(), t1.getGOAC()), new Tree(dim2, t2.getGOA(), t2.getGOAC())};
+		return new Tree[] {new Tree(dim1, t1.getGOA()), new Tree(dim2, t2.getGOA())};
 	}
-	
+
 	public static Tree[] crossover3(Tree t1, Tree t2, Tree t3, double[][] data, String[] target, double train_p){
 		ArrayList<Node> dim1 = t1.cloneDimensions();
 		ArrayList<Node> dim2 = t2.cloneDimensions();
@@ -195,8 +259,7 @@ public class TreeGeneticOperatorHandler {
 		NodeHandler.swap(r1,r2);
 		NodeHandler.swap(r2,r3);
 
-		return new Tree[] {new Tree(dim1, t1.getGOA(), t1.getGOAC()), new Tree(dim2, t2.getGOA(), t2.getGOAC()),
-				new Tree(dim3, t3.getGOA(), t3.getGOAC())};
+		return new Tree[] {new Tree(dim1, t1.getGOA()), new Tree(dim2, t2.getGOA()), new Tree(dim3, t3.getGOA())};
 	}
 
 	public static Tree[] mutation1(Tree t1, String[] op, String[] term, double t_rate, int max_depth, double[][] data, String[] target, double train_p){
@@ -206,7 +269,7 @@ public class TreeGeneticOperatorHandler {
 		Node r1 = NodeHandler.randomNode(p1);
 		NodeHandler.redirect(r1, new Node(op,term,t_rate,max_depth));
 
-		return new Tree[] {new Tree(dim, t1.getGOA(), t1.getGOAC())};
+		return new Tree[] {new Tree(dim, t1.getGOA())};
 	}
 
 	public static Tree[] mutation2(Tree t1, String[] op, String[] term, double t_rate, int max_depth, double[][] data, String[] target, double train_p){
@@ -214,7 +277,7 @@ public class TreeGeneticOperatorHandler {
 
 		dim.add(new Node(op,term,t_rate,max_depth));
 
-		return new Tree[] {new Tree(dim, t1.getGOA(), t1.getGOAC())};
+		return new Tree[] {new Tree(dim, t1.getGOA())};
 	}
 
 	public static Tree[] mutation3(Tree t1, String[] op, String[] term, double t_rate, int max_depth, double[][] data, String[] target, double train_p){
@@ -223,13 +286,12 @@ public class TreeGeneticOperatorHandler {
 		if(dim.size()>1)
 			dim.remove( Mat.random(dim.size()) );
 
-		return new Tree[] {new Tree(dim, t1.getGOA(), t1.getGOAC())};
+		return new Tree[] {new Tree(dim, t1.getGOA())};
 	}
 
 
 	private static int roulette(double [] v){
 		double acc = 0;
-		//System.out.println(v);
 		for (double d : v){
 			acc += d;
 		}

@@ -1,52 +1,17 @@
 import java.io.IOException;
 
 import weka.classifiers.trees.m3gp.tree.Tree;
-import weka.classifiers.trees.m3gp.tree.TreeMutationHandler;
-import weka.classifiers.trees.m3gp.tree.TreePruningHandler;
 import weka.classifiers.trees.m3gp.util.Arrays;
-import weka.classifiers.trees.m3gp.util.Data;
-import weka.classifiers.trees.m3gp.util.Mat;
 import weka.classifiers.trees.m3gp.util.Matrix;
 
 public class Teste {
 	public static void main(String[] args) throws IOException {
 
-		String filename = "datasets/heart.csv";
-		
-		Object [] datatarget = Data.readDataTarget(filename);
-		double [][]data = (double[][]) datatarget [0];
-		String [] target = (String[]) datatarget [1];
-		
-		String [] te = new String[data[0].length];
-		for(int i = 0; i < te.length; i++)
-			te[i] = "x"+i;
-		
-		String [] op = "+ - * /".split(" ");
-		
-		Tree t = new Tree(op,te, 0, 6);
-
-		t = TreeMutationHandler.mutation(t, op,te, 0.5, 6, data, target, 0.7);
-		t = TreeMutationHandler.mutation(t, op,te, 0.5, 6, data, target, 0.7);
-		t = TreeMutationHandler.mutation(t, op,te, 0.5, 6, data, target, 0.7);
-		t = TreeMutationHandler.mutation(t, op,te, 0, 6, data, target, 0.7);
-		t = TreeMutationHandler.mutation(t, op,te, 0.5, 6, data, target, 0.7);
-		t = TreeMutationHandler.mutation(t, op,te, 0.5, 6, data, target, 0.7);
-		t = TreeMutationHandler.mutation(t, op,te, 1, 6, data, target, 0.7);
-		
-		
-
-		System.out.println(t);
-		System.out.println(t.getTrainAccuracy(data, target, 0.7));
-		
-		System.out.println();
-		
-		//t = TreeMutationHandler.mutation(t, "+ - * /".split(" "),"0".split(" "), 1, 1, data, target, 0.7);
-		t = TreePruningHandler.prun(t, data, target, 0.7);
-		
-		System.out.println(t);
-		System.out.println(t.getTrainAccuracy(data, target, 0.7));
-		
-		
+		Tree t = new Tree(null, new double[] {0.2,0.2,0.2,0.2,0.2});
+		double[] tmp = t.getGOA();
+		t.incGOA(1);
+		System.out.println(Arrays.arrayToString(tmp));
+		System.out.println(Arrays.arrayToString(t.getGOA()));
 	}
 
 	private static double[][] abs(double[][] i2) {

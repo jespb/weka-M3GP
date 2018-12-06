@@ -18,11 +18,11 @@ public class Tree implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	static final boolean MULTI_VECTOR = true;
 	public static String[] operations;
 	public static int trainSize;
 
 	private double[] goAffinity; // Probabilidades de cada genetic operator
-	private int[] goAffinityCount; // Nr de vezes que cada GO foi usado
 	
 	private ArrayList<Node> dimensions;
 
@@ -47,39 +47,46 @@ public class Tree implements Serializable{
 		operations = op;
 		
 		goAffinity = new double [TreeGeneticOperatorHandler.numberOfGeneticOperators];
-		goAffinityCount = new int [TreeGeneticOperatorHandler.numberOfGeneticOperators];
 		for (int i = 0; i < goAffinity.length; i++){
-			goAffinity[i]=1;
+			goAffinity[i]=1.0/goAffinity.length;
 		}
 	}
 	
 
 	public double[] getGOA(){
-		return Population.goAffinity; //goAffinity;
+		if(MULTI_VECTOR)
+		return Arrays.copy(goAffinity);
+		else
+		return Population.goAffinity;
 	}
 
-	public int[] getGOAC(){
-		return goAffinityCount;
-	}
-	
 	public void setGOA(double [] goa) {
 		goAffinity = goa;
 	}
-	
-	public void setGOAC(int [] goac) {
-		goAffinityCount = goac;
-	}
 
+	private final static double PERC = 0.99;
 	public void incGOA(int operation) {
-		goAffinity[operation] += 1.10;
-		goAffinityCount[operation] ++;
+		goAffinity[operation] = 1 - ( (1 - goAffinity[operation]) * PERC );
+		fixGOA();
 	}
 
 	public void decGOA(int operation) {
-		goAffinity[operation] /= 1.05;
-		if(goAffinity[operation]<0.1)	
-			goAffinity[operation] = 0.1;
-		goAffinityCount[operation] ++;
+		goAffinity[operation] *= PERC ;
+		fixGOA();
+	}
+	
+	private void fixGOA() {
+		for(int ii = 0; ii< goAffinity.length; ii++) {
+			goAffinity[ii] -=0.05;
+			if(goAffinity[ii] < 0) {
+				goAffinity[ii] = 0;
+			}
+		}
+		setGOA(Arrays.normalize(goAffinity));
+		for(int ii = 0; ii< goAffinity.length; ii++) {
+			goAffinity[ii] *= 1-0.05*goAffinity.length;
+			goAffinity[ii] += 0.05;
+		}
 	}
 
 	public Tree(ArrayList<Node> dim) {
@@ -87,15 +94,13 @@ public class Tree implements Serializable{
 	}
 	
 
-	public Tree(ArrayList<Node> dim, double [] goa, int [] goac) {
+	public Tree(ArrayList<Node> dim, double [] goa) {
 		dimensions = dim;
 
 		if(goa != null){
 			goAffinity = new double[goa.length];
-			goAffinityCount = new int[goa.length];
 			for(int i = 0; i < goa.length; i++){
 				goAffinity[i] = goa[i];
-				goAffinityCount[i] = goac[i];
 			}
 		}
 	}
@@ -230,7 +235,6 @@ public class Tree implements Serializable{
 
 		//goAffinity
 		sb.append("            \"GOA\":"+ Arrays.arrayToString(getGOA()) + ",\n");
-		sb.append("            \"GOAC\":"+ Arrays.arrayToString(goAffinityCount) + ",\n");
 
 		
 		//pontos treino
