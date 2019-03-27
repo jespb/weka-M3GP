@@ -1,7 +1,6 @@
 package weka.classifiers.trees.m3gp.client;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -11,43 +10,20 @@ import weka.classifiers.trees.m3gp.util.Data;
 
 /**
  * 
- * @author João Batista, jbatista@di.fc.ul.pt
+ * @author Joao Batista, jbatista@di.fc.ul.pt
  *
  */
 public class ClientWekaSim {
-
-	private static int file = 0;
-	private static boolean onlyOne = true;
-	
-	private static String[] filenames = "heart.csv mcd3.csv mcd10.csv movl.csv seg.csv vowel.csv yeast.csv wav.csv".split(" ");
-	private static String filename = filenames[file];
-	private static String datasetFilename = "datasets" + File.separator + filename;
-	private static String treeType = "Full";
-
-	public static String [] operations = "+ - * /".split(" ");
-	private static String [] terminals = null;
-
-	private static double speed = 1;
-
-	private static double trainFraction = 0.70;
-	private static double tournamentFraction = 0.01 * speed;
-	private static double elitismFraction = 0.002 * speed ;
-
-	private static int numberOfGenerations = 100;
-	private static int initialRun_ID =0;
-	private static int numberOfRuns = 1;
-	private static int populationSize = (int)(500 / speed);
-	private static int maxDepth = 6;
-
-	private static boolean shuffleDataset = true;
-
 	private static double [][] data = null;
 	private static String [] target = null;
 
 	public static BufferedWriter datafile;
-
+	
+	private static String singleRun=Constants.DATASETS[8];
 
 	// Variables
+	private static String dataset = null;
+	private static String[] terminals = null;
 	private static Population f = null;
 
 	/**
@@ -56,41 +32,27 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		treatArgs(args);
-
-		System.out.println("Arguments:");
-		for(String s : args) {
-			System.out.println("    "+s);
-		}
-		System.out.println();
-
-		if(args.length == 2) {
-			filename = args[0];
-			datasetFilename = "datasets" + File.separator + filename;
-			numberOfRuns=1;
-			initialRun_ID=Integer.parseInt(args[1]);
-		}
-
-		if (onlyOne) {
+		if (Constants.SINGLE_DATASET) {
+			System.out.println("RUNNING FILE: " + singleRun);
+			dataset = singleRun;
 			init();
 
 			long time = System.currentTimeMillis();
-			for(int run = 0 ; run < numberOfRuns; run++){
-				run(run + initialRun_ID);
+			for(int run = 0 ; run < Constants.NUMBER_OF_RUNS; run++){
+				run(run + Constants.INITIAL_RUN_ID);
 			}
 			System.out.println((System.currentTimeMillis() - time) + "ms");
 
 		}else {
-			for( String file : filenames) {
+			for( String file : Constants.DATASETS) {
 				System.out.println("RUNNING FILE: " + file);
-				filename = file;
-				datasetFilename = "datasets" + File.separator + filename;
+				dataset = file;
 
 				init();
 
 				long time = System.currentTimeMillis();
-				for(int run = 0 ; run < numberOfRuns; run++){
-					run(run + initialRun_ID);
+				for(int run = 0 ; run < Constants.NUMBER_OF_RUNS; run++){
+					run(run +  Constants.INITIAL_RUN_ID);
 				}
 				System.out.println((System.currentTimeMillis() - time) + "ms");
 			}
@@ -103,7 +65,7 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	private static void init() throws IOException{
-		Object [] datatarget = Data.readDataTarget(datasetFilename);
+		Object [] datatarget = Data.readDataTarget(Constants.DATASET_DIR + dataset);
 		data = (double[][]) datatarget [0];
 		target = (String[]) datatarget [1];
 	}
@@ -114,15 +76,15 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	private static void run(int run) throws IOException{
-		System.out.println("Run " + run + "("+filename.split("[.]")[0]+"):");
-		datafile = new BufferedWriter(new FileWriter("Run_"+run+"_"+filename.split("[.]")[0]+".json"));
+		System.out.println("Run " + run + "("+dataset.split("[.]")[0]+"):");
+		datafile = new BufferedWriter(new FileWriter(Constants.OUTPUT_DIR+"Run_"+run+"_"+dataset.split("[.]")[0]+".json"));
 		datafile.write("{\n    \"generations\": [{\n");
 
-		if(shuffleDataset)Arrays.shuffle(data, target);
+		if(Constants.SHUFFLE_DATASET)Arrays.shuffle(data, target);
 
 		setTerm(data);
 
-		double [][] train = new double [(int) (data.length*trainFraction)][data[0].length];
+		double [][] train = new double [(int) (data.length*Constants.TRAIN_FRACTION)][data[0].length];
 		double [][] test = new double [data.length - train.length][data[0].length];
 
 		for(int i = 0; i < data.length; i++){
@@ -142,26 +104,6 @@ public class ClientWekaSim {
 		datafile.close();
 	}
 
-	/**
-	 * Trata dos argumentos fornecidos
-	 * @param args
-	 */
-	private static void treatArgs(String [] args){
-		for(int i = 0; i < args.length; i++){
-			String [] split = args[i].split(":");
-			switch(split[0]){
-			case "depth":
-				maxDepth = Integer.parseInt(split[1]);
-				break;
-			case "maxgen":
-				numberOfGenerations = Integer.parseInt(split[1]);
-				break;
-			case "popsize":
-				populationSize = Integer.parseInt(split[1]);
-				break;
-			}
-		}
-	}
 
 	/**
 	 * Define o valor dos terminais
@@ -179,9 +121,6 @@ public class ClientWekaSim {
 	 * @throws IOException
 	 */
 	private static void setPopulation() throws IOException{
-		f = new Population("", operations, 
-				terminals, maxDepth, data, target, 
-				populationSize,trainFraction, treeType,numberOfGenerations,
-				tournamentFraction, elitismFraction);
+		f = new Population(terminals, data, target);
 	}
 }

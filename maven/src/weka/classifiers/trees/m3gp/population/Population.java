@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import weka.classifiers.trees.m3gp.client.ClientWekaSim;
+import weka.classifiers.trees.m3gp.client.Constants;
 import weka.classifiers.trees.m3gp.tree.Tree;
 import weka.classifiers.trees.m3gp.tree.TreeGeneticOperatorHandler;
 import weka.classifiers.trees.m3gp.util.Arrays;
@@ -16,13 +17,10 @@ import weka.classifiers.trees.m3gp.util.Arrays;
  *
  */
 public class Population{
-	private boolean messages = true;
-
 	// current and max generation
 	public static int generation = 0;
 
 	public static double[] goAffinity;
-	private int maxGeneration = 10;
 
 	// population
 	private Tree [] population;
@@ -30,25 +28,20 @@ public class Population{
 	//data, target column and fraction used for training
 	private double [][] data;
 	private String [] target;
-	private double trainFraction;
 
 	//fraction of the population used for tournament and elitism
 	private int tournamentSize = 2;
 	private int elitismSize = 1;
 
 	//operations and terminals used
-	private String [] operations;
 	private String [] terminals;
-	
-	//probability of a node being terminal while using grow to create a tree
-	private double terminalRateForGrow = 0.1;
-	
+
 	//initial max depth
 	private int maxDepth = 6;
 
 	//from the trees with the best train rmse over the generations, this is the one with the lower test rmse
 	private Tree bestTree = null;
-	
+
 	//public static double[] goAffinity;
 
 	/**
@@ -64,55 +57,60 @@ public class Population{
 	 * @param trainFract
 	 * @throws IOException
 	 */
-	public Population(String filename, String [] op, String [] term, int maxDepth, 
-			double [][] data, String [] target, int populationSize, double trainFract,
-			String populationType, int maxGeneration, double tournamentFraction,
-			double elitismFraction) throws IOException{
+	public Population(String [] term, double [][] data, String [] target) throws IOException{
 		message("Creating forest...");
-		resetGOAffinity();
-
-		tournamentSize = (int) (tournamentFraction * populationSize);
-		elitismSize = (int) (elitismFraction * populationSize);
 		
+
+		tournamentSize = (int) (Constants.TOURNAMENT_FRACTION * Constants.POPULATION_SIZE);
+		elitismSize = (int) (Constants.ELITISM_FRACTION * Constants.POPULATION_SIZE);
+
 		this.data = data;
 		this.target = target;
-		this.trainFraction = trainFract;
 
-		this.operations = op;
 		this.terminals = term;
-		this.maxDepth = maxDepth;
 
-		this.maxGeneration = maxGeneration;
+		population = new Tree[Constants.POPULATION_SIZE];
 
-		population = new Tree[populationSize];
-
-		switch(populationType) {
-		case "Ramped":
-			for(int i = 0; i < populationSize; i++){
-				if( i < (int)(populationSize * 0.75))
-					population[i] = new Tree(op, term, 0 , (i% (maxDepth-1) ) +2 );
-				else
-					population[i] = new Tree(op, term, terminalRateForGrow , (i% (maxDepth-1) ) +2 );
-			}
-			break;
-		default: // full
-			for(int i = 0; i < populationSize; i++){
-				population[i] = new Tree(op, term, 0 , maxDepth);
-			}
-			break;
+		for(int i = 0; i < Constants.POPULATION_SIZE; i++){
+			population[i] = new Tree(term, 0 , maxDepth);
 		}
 		
-		Tree.trainSize = (int)(target.length * trainFraction);		
+		resetGOAffinity();
 	}
-	
+
 	private void resetGOAffinity() {
-		goAffinity = new double[5];
+		
+		goAffinity = new double[Constants.NUMBER_OF_GENETIC_OPERATORS];
 		for(int i = 0; i < goAffinity.length; i++) {
 			goAffinity[i] = 1.0/goAffinity.length;
+			//goAffinity[i] = Math.random();
 		}
+		goAffinity = Arrays.normalize(goAffinity);
+		
+		
+		for(int i = 0; i < population.length; i++) {
+			Tree t = population[i];
+			t.setGOA(Arrays.copy(goAffinity));
+		}
+		
+		
+		/*
+		for(Tree t : population) {
+			
+			double [] d = new double[Constants.NUMBER_OF_GENETIC_OPERATORS];
+			for(int j = 0; j < d.length; j++) {
+				d[j] = Math.random();
+			}
+			d = Arrays.normalize(d);
+			
+			t.setGOA(d);
+		}
+		*/
+		
 	}
-	
+
 	private double[] medianGOA() {
+		try {
 		double[][] ret = new double [population[0].getGOA().length][population.length];
 		for(int i = 0; i < population.length; i++) {
 			for(int k = 0; k < population[i].getGOA().length; k++) {
@@ -123,9 +121,13 @@ public class Population{
 		for(int i = 0; i < median.length; i++) {
 			median[i] = Arrays.median(ret[i]);
 		}
-		return median;
+		return Arrays.normalize(median);
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
-	
+
 
 	/**
 	 * Trains the classifier
@@ -135,21 +137,22 @@ public class Population{
 
 		generation = 0;
 		while(improving()){
+			//resetGOAffinity();
 			ClientWekaSim.datafile.write("        \"MedianGOA\":\"" + Arrays.arrayToString(medianGOA())  + "\"\n");
 			ClientWekaSim.datafile.write("        \"Individuals\":{\n");
-			
+
 			if(generation%5 == 0)
 				message("Generation " + generation + "...");
 			nextGeneration();
 
 			generation ++;
-			
+
 			ClientWekaSim.datafile.write("        }\n");
 			if(improving())
 				ClientWekaSim.datafile.write(",\n");
 		}
-		bestTree = prun(bestTree, data, target, trainFraction);
-		
+		bestTree = prun(bestTree, data, target);
+
 		return null;
 	}
 
@@ -157,7 +160,7 @@ public class Population{
 	 * Returns true if the classifier is still improving
 	 */
 	public boolean improving() {
-		return generation < maxGeneration;
+		return generation < Constants.NUMBER_OF_GENERATIONS;
 	}	
 
 	// train is perfect
@@ -167,82 +170,82 @@ public class Population{
 	 */
 	public void nextGeneration() throws IOException{
 		if (done) {
-			
-			double train = bestTree.getTrainAccuracy(data, target, trainFraction);
-			double test = bestTree.getTestAccuracy(data, target, trainFraction);
-			System.out.println(generation + ": " + train + " // " + test + "/// (done)");
-			ClientWekaSim.datafile.write(bestTree.toJSON(data, target, trainFraction)+"\n");
+
+			double train = bestTree.getTrainAccuracy(data, target);
+			double test = bestTree.getTestAccuracy(data, target);
+			message(generation + ": " + train + " // " + test + "/// (done)");
+			ClientWekaSim.datafile.write(bestTree.toJSON(data, target)+"\n");
 			return;
 		}
 
 		Tree [] nextGen = new Tree [population.length];
 		double [] fitnesses = new double[population.length];
 
-		
+
 		//resetGOAffinity();
-		
-		
+
+
 		// Obtencao de fitness
 		long timeFitness = System.currentTimeMillis();
-		ExecutorService pool = Executors.newFixedThreadPool(3);	
 		for (int i = 0; i < population.length; i++) {
-			pool.submit(new FitnessCalculator(fitnesses, i, population[i]));
+			fitnesses[i] = PopulationFunctions.fitnessTrain(population[i],data, target);
 		}
-		pool.shutdown();
-		while(!pool.isTerminated());
-		
 		timeFitness = System.currentTimeMillis()-timeFitness;
 
-		
+
 		Arrays.mergeSortBy(population, fitnesses);
-		
+
 		long timeFile = System.currentTimeMillis();
 		timeFile = System.currentTimeMillis()-timeFile;
 		//ClientWekaSim.datafile.addGen(nextGen);
-		
-		//Pruning 			//TODO fix
-		long timePruning = System.currentTimeMillis();
-		nextGen[0] = prun(population[population.length-1],data,target,trainFraction);
-		timePruning = System.currentTimeMillis()-timePruning;
-		
+
+		//Pruning
+		nextGen[0] = prun(population[population.length-1],data,target);
+
 		// Elitismo 
 		for(int i = 1; i < 1+elitismSize; i++ ){
 			nextGen[i] = population[population.length-1-i];
 		}
-		
-		
-		//Selecao e reproducao
 
-		long timeSelectAndCross = System.currentTimeMillis();
+
+		//Selecao e reproducao
+		int n_threads = Constants.NUMBER_OF_THREADS;
+		Tree[][] descendents = new Tree[n_threads][nextGen.length/n_threads + 1];
+		ExecutorService pool = Executors.newFixedThreadPool(n_threads);	
 		
-		for(int i = 1+elitismSize; i < nextGen.length; i++){
-			Tree [] cross = TreeGeneticOperatorHandler.geneticOperation(population, tournamentSize, operations, terminals, terminalRateForGrow, maxDepth, data, target, trainFraction);
-			for(int k = 0; k < cross.length && k+i < population.length; k++){
-				nextGen[i+k]=cross[k];
+		for (int i = 0; i < n_threads; i++) {
+			pool.submit(new BirthGiver(descendents[i],population));
+		}
+		pool.shutdown();		
+		while(!pool.isTerminated());
+	
+		for(int i = 1+elitismSize; i < nextGen.length;){
+			for(int t = 0; t < n_threads; t++) {
+				for(int ind = 0; ind < descendents[t].length && i < nextGen.length; ind++) {
+					nextGen[i] = descendents[t][ind];
+					i++;
+				}
 			}
-			i+=cross.length-1;
 		}
 
-		
-		
-		timeSelectAndCross = System.currentTimeMillis()-timeSelectAndCross;
-		ClientWekaSim.datafile.write(population[population.length-1].toJSON(data, target, trainFraction)+"\n");
-		
+
+		ClientWekaSim.datafile.write(population[population.length-1].toJSON(data, target)+"\n");
+
 		if(elitismSize == 0) {
 			setBestToLast(population);
 		}
-			
+
 		bestTree = population[population.length-1];
 
-		double train = bestTree.getTrainAccuracy(data, target, trainFraction);
-		double test = bestTree.getTestAccuracy(data, target, trainFraction);
-		
-		System.out.println(generation + ": " + train + " // " + test + "///" + Arrays.arrayToString(bestTree.getGOA()));
-		
+		double train = bestTree.getTrainAccuracy(data, target);
+		double test = bestTree.getTestAccuracy(data, target);
+
+		message(generation + ": " + train + " // " + test + "///" + Arrays.arrayToString(bestTree.getGOA()));
+
 		population = nextGen;
-		
+
 		if(train == 1) {
-			bestTree = prun(bestTree, data, target, trainFraction);
+			bestTree = prun(bestTree, data, target);
 			done = true;
 		}
 	}
@@ -253,10 +256,10 @@ public class Population{
 	 */
 	private void setBestToLast(Tree[] pop) {
 		int bestIndex = 0;
-		double bestRMSE = pop[0].getTrainAccuracy(data, target,trainFraction);
+		double bestRMSE = pop[0].getTrainAccuracy(data, target);
 		double candidateRMSE;
 		for(int i = 0; i < pop.length; i++){
-			candidateRMSE = pop[i].getTrainAccuracy(data, target,trainFraction);
+			candidateRMSE = pop[i].getTrainAccuracy(data, target);
 			if(candidateRMSE > bestRMSE){
 				bestRMSE = candidateRMSE;
 				bestIndex = i;
@@ -280,7 +283,7 @@ public class Population{
 	 * @param s
 	 */
 	private void message(String s){
-		if(messages)
+		if(Constants.MESSAGES)
 			System.out.println(s);
 	}
 
@@ -294,26 +297,32 @@ public class Population{
 		else
 			return bestTree.toString();
 	}
-	
-	
-	private Tree prun(Tree tree, double[][] data, String[] target, double trainFraction) {
-		return PopulationFunctions.prun(tree,data,target,trainFraction);
-	}
-	
-	private class FitnessCalculator implements Runnable{
-		double [] fit;
-		int index;
-		Tree t;
-		
-		public FitnessCalculator(double [] fit, int index, Tree t) {
-			this.fit = fit;
-			this.index = index;
-			this.t= t;
-		}
-		
-		public void run() {
-			fit[index] = PopulationFunctions.fitnessTrain(t,data, target,trainFraction);
-		}
+
+
+	private Tree prun(Tree tree, double[][] data, String[] target) {
+		return PopulationFunctions.prun(tree,data,target);
 	}
 
+
+
+
+	private class BirthGiver implements Runnable{
+		Tree[] descendents;
+		Tree[] population;
+
+		public BirthGiver(Tree[] descendents, Tree[] population) {
+			this.descendents = descendents;
+			this.population = population;
+		}
+
+		public void run() {
+			for(int i = 0; i < descendents.length; i++) {
+				Tree [] cross = TreeGeneticOperatorHandler.geneticOperation(population, tournamentSize, terminals, data, target);
+				for(int k = 0; k < cross.length && k+i < descendents.length; k++){
+					descendents[i+k] = cross[k];
+				}
+				i+=cross.length-1;
+			}
+		}
+	}
 }

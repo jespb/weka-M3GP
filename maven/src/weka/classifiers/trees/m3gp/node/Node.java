@@ -2,11 +2,12 @@ package weka.classifiers.trees.m3gp.node;
 
 import java.io.Serializable;
 
+import weka.classifiers.trees.m3gp.client.Constants;
 import weka.classifiers.trees.m3gp.util.Mat;
 
 /**
  * 
- * @author João Batista, jbatista@di.fc.ul.pt
+ * @author Joï¿½o Batista, jbatista@di.fc.ul.pt
  *
  */
 public class Node implements Serializable{
@@ -45,17 +46,17 @@ public class Node implements Serializable{
 	 * @param t_rate
 	 * @param depth
 	 */
-	public Node(String [] op, String [] term, double t_rate, int depth){
+	public Node(String [] term, int depth){
 		if(
-				Math.random() * (op.length + term.length + 1)< op.length +1 
+				Math.random() * (Constants.OPERATIONS.length + term.length + 1)< Constants.OPERATIONS.length +1 
 				//Math.random()< t_rate 
 				|| depth <= 1){
 			int index = Mat.random(term.length);
 			v = index < term.length-1? index :Math.random();
 		}else{
-			v = Mat.random(op.length);
-			l = new Node(op, term, t_rate, depth-1);
-			r = new Node(op, term, t_rate, depth-1);
+			v = Mat.random(Constants.OPERATIONS.length);
+			l = new Node(term, depth-1);
+			r = new Node(term, depth-1);
 		}
 	}
 
@@ -109,14 +110,14 @@ public class Node implements Serializable{
 	/**
 	 * Returns the node under the String format
 	 */
-	public String toString(String [] operations){
+	public String toString(){
 		if(isLeaf()){
 			if (v != (int)v)
 				return v+"";
 			else
 				return "x"+(int)v;
 		}else{
-			return "( " + l.toString(operations) + " " + operations[(int)v] + " " + r.toString(operations) + " )";
+			return "( " + l.toString() + " " + Constants.OPERATIONS[(int)v] + " " + r.toString() + " )";
 		}
 	}
 
@@ -182,12 +183,12 @@ public class Node implements Serializable{
 		v = index < term.length-1? index :Math.random();
 	}
 	
-	public void changeValue(String[] op, String[] term) {
+	public void changeValue(String[] term) {
 		if( isLeaf()){
 			int index = Mat.random(term.length);
 			v = index < term.length-1? index :Math.random();
 		}else{
-			v = Mat.random(op.length);
+			v = Mat.random(Constants.OPERATIONS.length);
 		}
 	}
 }

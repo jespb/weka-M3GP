@@ -1,37 +1,17 @@
 package weka.classifiers.trees.m3gp.tree;
 
-import weka.classifiers.trees.m3gp.util.Arrays;
+import weka.classifiers.trees.m3gp.client.Constants;
 
 public class Classification {
-	private static int method = 2;
-	
-	public static String predict(Tree t, double[] d, int method) {
-		String p = null;
-		switch(method) {
-		case 1:
-			p = mahalanobisDistance(t, d);
-			break;
-		case 2:
-			p = euclideanDistance(t,d);
-			break;
-		case 3:
-			p = knn(t,d);
-			break;
-		}
-		return p;
-	}
 	
 	public static String predict(Tree t, double[] d) {
 		String p = null;
-		switch(method) {
+		switch(Constants.DISTANCE_USED) {
 		case 1:
 			p = mahalanobisDistance(t, d);
 			break;
 		case 2:
 			p = euclideanDistance(t,d);
-			break;
-		case 3:
-			p = knn(t,d);
 			break;
 		}
 		return p;
@@ -67,24 +47,5 @@ public class Classification {
 		}
 
 		return prediction;
-		
-	}
-	
-	private static int knn = 5;
-	private static String knn(Tree t, double []d) {
-		double [] result = t.calculateAll(d);
-		double [][] map = t.getMap();
-		String [] classes = t.getTarget().clone();
-		double [] distancesToPoints = new double[map.length];
-		for(int i =0 ; i < map.length;i++) {
-			distancesToPoints[i] = Arrays.euclideanDistance(result, map[i]);
-		}
-		Arrays.mergeSortBy(classes, distancesToPoints);
-
-		String [] options = new String[knn];
-		for(int i = 0; i < knn; i++) {
-			options[i] = classes[i];
-		}
-		return Arrays.mostCommon(options);
 	}
 }

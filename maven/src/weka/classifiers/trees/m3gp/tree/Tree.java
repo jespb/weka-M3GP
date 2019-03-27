@@ -3,6 +3,7 @@ package weka.classifiers.trees.m3gp.tree;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import weka.classifiers.trees.m3gp.client.Constants;
 import weka.classifiers.trees.m3gp.node.Node;
 import weka.classifiers.trees.m3gp.population.Population;
 import weka.classifiers.trees.m3gp.util.Arrays;
@@ -10,7 +11,7 @@ import weka.classifiers.trees.m3gp.util.Matrix;
 
 /**
  * 
- * @author João Batista, jbatista@di.fc.ul.pt
+ * @author Joï¿½o Batista, jbatista@di.fc.ul.pt
  *
  */
 public class Tree implements Serializable{
@@ -18,9 +19,6 @@ public class Tree implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	static final boolean MULTI_VECTOR = true;
-	public static String[] operations;
-	public static int trainSize;
 
 	private double[] goAffinity; // Probabilidades de cada genetic operator
 	
@@ -41,41 +39,44 @@ public class Tree implements Serializable{
 	 * @param t_rate
 	 * @param depth
 	 */
-	public Tree(String [] op, String [] term, double t_rate, int depth){
+	public Tree(String [] term, double t_rate, int depth){
 		dimensions = new ArrayList<Node>();
-		dimensions.add(new Node(op, term, t_rate,depth));
-		operations = op;
+		dimensions.add(new Node(term,depth));
 		
-		goAffinity = new double [TreeGeneticOperatorHandler.numberOfGeneticOperators];
+		goAffinity = new double [Constants.NUMBER_OF_GENETIC_OPERATORS];
 		for (int i = 0; i < goAffinity.length; i++){
 			goAffinity[i]=1.0/goAffinity.length;
 		}
 	}
 	
 
+	@SuppressWarnings("unused")
 	public double[] getGOA(){
-		if(MULTI_VECTOR)
-		return Arrays.copy(goAffinity);
+		if(Constants.PROBABILITY_ADAPTATION > 0)
+			return Arrays.copy(goAffinity);
 		else
-		return Population.goAffinity;
+			return Population.goAffinity;
 	}
 
 	public void setGOA(double [] goa) {
 		goAffinity = goa;
 	}
 
-	private final static double PERC = 0.99;
 	public void incGOA(int operation) {
-		goAffinity[operation] = 1 - ( (1 - goAffinity[operation]) * PERC );
+		//goAffinity[operation] += 0.1;
+		goAffinity[operation] = 1 - ( (1 - goAffinity[operation]) * Constants.LEARNING_T );
 		fixGOA();
 	}
 
 	public void decGOA(int operation) {
-		goAffinity[operation] *= PERC ;
+		//goAffinity[operation] *= 0.95;
+		goAffinity[operation] *= Constants.LEARNING_T ;
 		fixGOA();
 	}
 	
 	private void fixGOA() {
+		goAffinity = Arrays.normalize(goAffinity);
+		/*
 		for(int ii = 0; ii< goAffinity.length; ii++) {
 			goAffinity[ii] -=0.05;
 			if(goAffinity[ii] < 0) {
@@ -87,6 +88,7 @@ public class Tree implements Serializable{
 			goAffinity[ii] *= 1-0.05*goAffinity.length;
 			goAffinity[ii] += 0.05;
 		}
+		*/
 	}
 
 	public Tree(ArrayList<Node> dim) {
@@ -112,9 +114,9 @@ public class Tree implements Serializable{
 		StringBuilder sb = new StringBuilder();
 		sb.append("            \"Dimensions\":[\n");
 		for(int i = 0; i< dimensions.size()-1; i++) {
-			sb.append("                \""+dimensions.get(i).toString(operations)+"\",\n");
+			sb.append("                \""+dimensions.get(i).toString()+"\",\n");
 		}
-		sb.append("                \""+dimensions.get(dimensions.size()-1).toString(operations)+"\"\n");
+		sb.append("                \""+dimensions.get(dimensions.size()-1).toString()+"\"\n");
 		sb.append("            ]");
 		return sb.toString();
 	}
@@ -135,15 +137,15 @@ public class Tree implements Serializable{
 		return target;
 	}
 
-	private void makeCluster(double [][] data, String [] target, double trainFract) {
+	private void makeCluster(double [][] data, String [] target) {
 		this.target = target;
-		this.map = new double[(int)(data.length * trainFract)][dimensions.size()];
+		this.map = new double[(int)(data.length * Constants.TRAIN_FRACTION)][dimensions.size()];
 		
 		classes = new ArrayList<String>();
 		ArrayList<ArrayList<double []>> clusters = new ArrayList<ArrayList<double[]>>();
 
 		//Descobre o numero de classes e cria um numero de clusters igual ao numero de classes
-		for(int i = 0; i < (int)(target.length * trainFract); i++) {
+		for(int i = 0; i < (int)(target.length * Constants.TRAIN_FRACTION); i++) {
 			if(!classes.contains(target[i])) {
 				classes.add(target[i]);
 				clusters.add(new ArrayList<double[]>());
@@ -151,7 +153,7 @@ public class Tree implements Serializable{
 		}
 		
 		//Adiciona os pontos ao cluster
-		for(int i = 0, index = -1; i < (int)(data.length * trainFract);i++) {
+		for(int i = 0, index = -1; i < (int)(data.length * Constants.TRAIN_FRACTION);i++) {
 			index = classes.indexOf(target[i]);
 			
 			double [] d = new double[dimensions.size()];
@@ -229,23 +231,23 @@ public class Tree implements Serializable{
 	}
 	
 
-	public String toJSON(double[][] data, String[] target, double trainFraction) {
+	public String toJSON(double[][] data, String[] target) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(toString()+",\n");
 
 		//goAffinity
-		sb.append("            \"GOA\":"+ Arrays.arrayToString(getGOA()) + ",\n");
+		sb.append("            \"GOA\":"+ Arrays.arrayToString(Arrays.normalize(getGOA())) + ",\n");
 
 		
 		//pontos treino
 		sb.append("            \"Train\":[\n");
-		for(int i = 0; i < (int)(data.length*trainFraction); i++) {
+		for(int i = 0; i < (int)(data.length*Constants.TRAIN_FRACTION); i++) {
 			sb.append("                [");
 			for(int dim = 0; dim < dimensions.size(); dim++) {
 				sb.append( "\"" + dimensions.get(dim).calculate(data[i]) +"\"," );
 			}
 			sb.append( "\"" + target[i]+"\"]");
-			if (i < data.length*trainFraction-1)
+			if (i < data.length*Constants.TRAIN_FRACTION-1)
 				sb.append(",");
 			sb.append("\n");
 		}
@@ -253,7 +255,7 @@ public class Tree implements Serializable{
 
 		//pontos teste
 		sb.append("            \"Test\":[\n");
-		for(int i = (int)(data.length*trainFraction); i < data.length; i++) {
+		for(int i = (int)(data.length*Constants.TRAIN_FRACTION); i < data.length; i++) {
 			sb.append("                [");
 			for(int dim = 0; dim < dimensions.size(); dim++) {
 				sb.append( "\"" + dimensions.get(dim).calculate(data[i]) +"\"," );
@@ -269,40 +271,40 @@ public class Tree implements Serializable{
 	}
 	
 	// ------- ------- ------- FUNCOES DE FITNESS ------- ------- -------
-	public double getTrainAccuracy(double [][] data, String [] target, double trainFract){
+	public double getTrainAccuracy(double [][] data, String [] target){
 		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFract);
+			makeCluster(data, target);
 		}
 
 		double hits = 0;
-		for(int i = 0; i < (int)(data.length*trainFract); i++) {
+		for(int i = 0; i < (int)(data.length*Constants.TRAIN_FRACTION); i++) {
 			if(predict(data[i]).equals(target[i]))
 				hits++;
 		}
-		return hits/(int)(data.length*trainFract);
+		return hits/(int)(data.length*Constants.TRAIN_FRACTION);
 	}
 
-	public double getTestAccuracy(double [][] data, String [] target, double trainFract){
+	public double getTestAccuracy(double [][] data, String [] target){
 		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFract);
+			makeCluster(data, target);
 		}
 		double hits = 0;
-		for(int i = (int)(data.length*trainFract); i < data.length; i++) {
+		for(int i = (int)(data.length*Constants.TRAIN_FRACTION); i < data.length; i++) {
 			if(predict(data[i]).equals(target[i]))
 				hits++;
 		}
-		return hits/(target.length - (int)(data.length*trainFract));
+		return hits/(target.length - (int)(data.length*Constants.TRAIN_FRACTION));
 	}
 
 	
 
-	public double getTrainRootMeanSquaredDistanceToCentroid(double [][] data, String[] target, double trainFract) {
+	public double getTrainRootMeanSquaredDistanceToCentroid(double [][] data, String[] target) {
 		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFract);
+			makeCluster(data, target);
 		}
 				
 		double acc_distance = 0;
-		double set_size = (int)(data.length*trainFract);
+		double set_size = (int)(data.length*Constants.TRAIN_FRACTION);
 		for(int i = 0; i < set_size; i++) {
 			double [] coor = new double[dimensions.size()];
 			for(int d = 0;d < dimensions.size(); d++) {
@@ -313,14 +315,14 @@ public class Tree implements Serializable{
 		return Math.sqrt(acc_distance/set_size);
 	}
 	
-	public double getTestRootMeanSquaredDistanceToCentroid(double [][] data, String[] target, double trainFract) {
+	public double getTestRootMeanSquaredDistanceToCentroid(double [][] data, String[] target) {
 		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFract);
+			makeCluster(data, target);
 		}
 		
 		double acc_distance = 0;
-		double set_size = data.length - (int)(data.length*trainFract);
-		for(int i = (int)(data.length*trainFract); i < data.length; i++) {
+		double set_size = data.length - (int)(data.length*Constants.TRAIN_FRACTION);
+		for(int i = (int)(data.length*Constants.TRAIN_FRACTION); i < data.length; i++) {
 			double [] coor = new double[dimensions.size()];
 			for(int d = 0;d < dimensions.size(); d++) {
 				coor[d] = dimensions.get(d).calculate(data[i]);
@@ -330,9 +332,9 @@ public class Tree implements Serializable{
 		return Math.sqrt(acc_distance/set_size);
 	}
 
-	public double getMeanDistanceBetweenCentroids(double [][] data, String[] target, double trainFract) {
+	public double getMeanDistanceBetweenCentroids(double [][] data, String[] target) {
 		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFract);
+			makeCluster(data, target);
 		}
 		
 		double total_distance = 0;
@@ -352,13 +354,13 @@ public class Tree implements Serializable{
 		}
 	}
 
-	public double getTrainRootMeanSquaredMHLNBDistanceToCentroid(double[][] data, String[] target, double trainFraction) {
+	public double getTrainRootMeanSquaredMHLNBDistanceToCentroid(double[][] data, String[] target) {
 		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFraction);
+			makeCluster(data, target);
 		}
 				
 		double acc_distance = 0;
-		double set_size = (int)(data.length*trainFraction);
+		double set_size = (int)(data.length*Constants.TRAIN_FRACTION);
 		for(int i = 0; i < set_size; i++) {
 			double [] result = calculateAll(data[i]);
 			int index = classes.indexOf(target[i]);
@@ -368,13 +370,13 @@ public class Tree implements Serializable{
 		return Math.sqrt(acc_distance/set_size);
 	}
 	
-	public double getTestRootMeanSquaredMHLNBDistanceToCentroid(double[][] data, String[] target, double trainFraction) {
+	public double getTestRootMeanSquaredMHLNBDistanceToCentroid(double[][] data, String[] target) {
 		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFraction);
+			makeCluster(data, target);
 		}
 				
 		double acc_distance = 0;
-		int set_size = (int)(data.length*trainFraction);
+		int set_size = (int)(data.length*Constants.TRAIN_FRACTION);
 		for(int i = set_size; i < data.length; i++) {
 			double [] result = calculateAll(data[i]);
 			double [] distances = calculateMHLNB(result);
@@ -383,9 +385,9 @@ public class Tree implements Serializable{
 		return Math.sqrt(acc_distance/set_size);
 	}
 
-	public double getMeanManhattanDistanceBetweenCentroids(double[][] data, String[] target, double trainFraction) {
+	public double getMeanManhattanDistanceBetweenCentroids(double[][] data, String[] target) {
 		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFraction);
+			makeCluster(data, target);
 		}
 		
 		double total_distance = 0;
@@ -399,13 +401,13 @@ public class Tree implements Serializable{
 		return total_distance;
 	}
 
-	public double getMeanManhattanDistanceToCentroids(double[][] data, String[] target, double trainFraction) {
+	public double getMeanManhattanDistanceToCentroids(double[][] data, String[] target) {
 		if (covarianceMatrix == null) {
-			makeCluster(data, target, trainFraction);
+			makeCluster(data, target);
 		}
 				
 		double acc_distance = 0;
-		double set_size = (int)(data.length*trainFraction);
+		double set_size = (int)(data.length*Constants.TRAIN_FRACTION);
 		for(int i = 0; i < set_size; i++) {
 			double [] result = calculateAll(data[i]);
 			int index = classes.indexOf(target[i]);
